@@ -43,6 +43,7 @@ docs/
 ## 문서
 
 - [리빌드 계획](./docs/rebuild-plan.md)
+- [아키텍처](./docs/architecture.md)
 
 ## 현재 상태
 
