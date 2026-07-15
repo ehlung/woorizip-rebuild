@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+
+# Expo / React Native
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+.metro-health-check*
+
+# Generated native folders
+ios/
+android/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+pnpm-debug.*
+
+# macOS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+
+# AI agent local files
+CLAUDE.md
+AGENTS.md
+.claude/
+**/CLAUDE.md
+**/AGENTS.md
+**/.claude/
