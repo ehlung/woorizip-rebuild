@@ -1,0 +1,15 @@
+{
+  "name": "woorizip-rebuild",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "mobile:start": "npm --workspace @woorizip/mobile run start",
+    "mobile:ios": "npm --workspace @woorizip/mobile run ios",
+    "mobile:android": "npm --workspace @woorizip/mobile run android",
+    "mobile:web": "npm --workspace @woorizip/mobile run web"
+  }
+}
