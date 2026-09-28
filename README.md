@@ -1,39 +1,73 @@
 # woorizip-rebuild
 
-가족 Q&A 기반 영상 아카이빙 서비스 **우리.zip**의 개인 리빌드 프로젝트입니다.
+가족 Q&A 기반 영상 아카이빙 서비스 **우리.zip**의 리빌드 프로젝트입니다.
 
-기존 팀 캡스톤 프로젝트의 서비스 아이디어와 핵심 기능을 기반으로, 웹앱 중심 구조를 **Expo 기반 모바일 앱**으로 전환하고, 영상 업로드/AI 분석/클라우드 저장 구조를 제품형 아키텍처로 재설계합니다.
+기존 팀 캡스톤 프로젝트는 로컬 환경에서 시연 가능한 수준까지 구현되었지만, 배포 환경에서는 서비스 간 연결이 안정적으로 동작하지 않았습니다. 이 프로젝트는 서비스 아이디어와 핵심 기능은 이어받고, 클라이언트, 백엔드, AI 전 영역을 **실제 운영 가능한 구조**로 다시 설계합니다.
 
-## 목표
+## 리빌드 방향
 
-- 모바일 앱 중심 UX 재설계
-- 영상 업로드와 AI 분석의 비동기 처리 구조 구현
-- S3, CloudFront, SQS 기반 미디어 아키텍처 설계
-- Express API, FastAPI AI worker, PostgreSQL 기반 백엔드 재구성
-- 배포 가능한 end-to-end 서비스 완성
+- **클라이언트**: 디자인 시스템을 새로 정의하고, 모바일 앱을 먼저 만든 뒤 웹 클라이언트를 별도로 구축합니다. 두 클라이언트는 디자인 토큰, API 클라이언트, 공통 로직을 공유합니다.
+- **백엔드**: Spring Boot 위에서 도메인 중심 구조, 가족 단위 인가, 비동기 처리의 정합성을 다룹니다.
+- **AI**: 영상 분석을 단계별 비동기 파이프라인으로 재구성하고, 평가 기준을 세워 품질을 측정합니다. 분석 결과를 활용한 의미 검색도 제공합니다.
+- **인프라**: 영상은 S3에 직접 업로드하고, 분석은 SQS로 분리하며, 미디어는 CloudFront로 전달합니다.
+
+## 주요 설계 과제
+
+**프론트엔드**
+
+- 디자인 토큰과 공통 컴포넌트 기반 화면 구성, 접근성 기준 반영
+- 모바일/웹 간 토큰, OpenAPI 기반 API 클라이언트, 공통 로직 공유
+- 토큰 자동 갱신과 동시 요청 중 갱신 요청 단일화
+- 서버 상태 캐싱, 낙관적 업데이트, 분석 상태 polling
+- 영상 업로드 진행률 표시와 실패 복구
+
+**백엔드**
+
+- Transactional Outbox로 답변 저장과 분석 요청 발행의 정합성 보장
+- AI 결과를 결과 큐로 받아 DB 쓰기 주체를 API 서버로 일원화
+- 업로드 완료 등록과 메시지 중복 수신에 대한 멱등성 처리
+- 가족 멤버십 기반 인가, 초대 코드 가입 동시성 처리
+- Testcontainers, LocalStack 통합 테스트와 k6 부하 테스트
+
+**AI**
+
+- 전사 → 요약 → 썸네일 → 임베딩 단계별 비동기 파이프라인
+- STT 모델 비교, 평가셋 기반 품질 측정
+- LLM 제공자 추상화와 프롬프트 버전 관리
+- pgvector 기반 가족 아카이브 의미 검색
 
 ## 기술 스택
 
-| 영역        | 스택                           |
-| ----------- | ------------------------------ |
-| Mobile App  | Expo, React Native, TypeScript |
-| API Server  | Node.js, Express, TypeScript   |
-| Database    | PostgreSQL                     |
-| ORM         | Prisma                         |
-| AI Server   | FastAPI, Python                |
-| Storage/CDN | AWS S3, CloudFront             |
-| Queue       | AWS SQS                        |
+| 영역          | 스택                                                    |
+| ------------- | ------------------------------------------------------- |
+| Mobile App    | Expo, React Native, TypeScript                          |
+| Web App       | React, TypeScript                                       |
+| Client Shared | Design Tokens, OpenAPI Client, TanStack Query, Zod      |
+| API Server    | Spring Boot 3, Java 21, Spring Security, JWT            |
+| Persistence   | Spring Data JPA, QueryDSL, Flyway                       |
+| Database      | PostgreSQL, pgvector                                    |
+| AI Server     | FastAPI, Python, faster-whisper, MediaPipe              |
+| Storage/CDN   | AWS S3, CloudFront                                      |
+| Queue         | AWS SQS                                                 |
+| Test          | Jest, RNTL, Maestro, Playwright, JUnit5, Testcontainers, pytest, k6 |
+| CI            | GitHub Actions                                          |
 
-## 예정 구조
+## 디렉터리 구조 (예정)
 
 ```txt
 apps/
-  mobile/
-  api/
-  ai/
+  mobile/          Expo 앱
+  web/             웹 클라이언트
+  api/             Spring Boot API 서버
+  ai/              FastAPI AI 서버, 분석 worker
 
 packages/
-  shared/
+  design-tokens/   플랫폼 중립 디자인 토큰
+  api-client/      OpenAPI 기반 API 클라이언트
+  core/            검증 스키마, 도메인 상수, 공통 로직
+
+infra/
+  docker-compose.yml   PostgreSQL(pgvector), LocalStack
 
 docs/
   rebuild-plan.md
@@ -49,7 +83,7 @@ docs/
 
 초기 설계 및 레포지토리 세팅 단계입니다.
 
-## 원본 프로젝트 맥락
+## 원본 프로젝트
 
-기존 우리.zip은 팀 캡스톤 프로젝트로 진행되었습니다.  
-이 레포지토리는 원본 팀 프로젝트를 직접 덮어쓰지 않고, 서비스 아이디어와 핵심 기능을 기반으로 개인 포트폴리오용으로 재설계하는 독립 리빌드입니다.
+우리.zip은 팀 캡스톤 프로젝트로 시작되었습니다.  
+이 레포지토리는 원본 팀 프로젝트와 독립적으로 진행하는 리빌드이며, 원본 코드를 그대로 가져오지 않고 서비스 아이디어와 핵심 기능을 바탕으로 새로 설계하고 구현합니다.
