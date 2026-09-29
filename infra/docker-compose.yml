@@ -18,11 +18,11 @@ services:
       retries: 10
 
   localstack:
-    image: localstack/localstack
+    # 2026.x 이미지부터 인증 토큰이 필요하므로, 토큰 없이 동작하는 마지막 버전(4.14)으로 고정한다.
+    image: localstack/localstack:4.14
     environment:
       SERVICES: s3,sqs
       AWS_DEFAULT_REGION: ${AWS_REGION:-ap-northeast-2}
-      LOCALSTACK_AUTH_TOKEN: ${LOCALSTACK_AUTH_TOKEN:-}
       S3_BUCKET: ${S3_BUCKET:-woorizip-media-local}
     ports:
       - "${LOCALSTACK_PORT:-4566}:4566"
