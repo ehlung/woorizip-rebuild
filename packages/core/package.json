@@ -1,0 +1,8 @@
+{
+  "name": "@woorizip/core",
+  "version": "0.0.0",
+  "private": true,
+  "description": "검증 스키마, 도메인 상수, 쿼리 키 등 클라이언트 공통 로직",
+  "main": "src/index.ts",
+  "types": "src/index.ts"
+}

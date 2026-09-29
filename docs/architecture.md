@@ -52,9 +52,9 @@ S3 -> CloudFront -> Expo App : 영상/썸네일 조회
 | Server State  | TanStack Query                                               |
 | Validation    | Zod                                                          |
 | FE Test       | Jest, React Native Testing Library, Maestro, Playwright      |
-| FE Monorepo   | pnpm workspace                                               |
+| FE Monorepo   | npm workspace                                                |
 | API Server    | Spring Boot 3, Java 21, Gradle                               |
-| Security      | Spring Security, JWT (access/refresh)                        |
+| Security      | Spring Security, JWT (access/refresh), 카카오/애플 로그인     |
 | Persistence   | Spring Data JPA, QueryDSL, Flyway                            |
 | Database      | PostgreSQL, pgvector                                         |
 | AI Server     | FastAPI, Python                                              |
@@ -68,7 +68,7 @@ S3 -> CloudFront -> Expo App : 영상/썸네일 조회
 | CI            | GitHub Actions                                               |
 | Local Dev     | Docker Compose                                               |
 | App Build     | Expo EAS                                                     |
-| Repository    | 개인 모노레포                                                |
+| Repository    | 모노레포 (클라이언트 npm workspace, API Gradle, AI Python)   |
 
 ## 3. 스택 선택 이유
 
@@ -201,6 +201,8 @@ UI 컴포넌트는 플랫폼별로 각 앱 안에 두되, 같은 토큰을 사�
 -> 실패: 토큰 삭제, 로그인 화면으로 이동
 ```
 
+- 로그인 수단은 이메일, 카카오, 애플이다. 소셜 로그인은 앱에서 각 제공자 SDK로 토큰을 받아 API 서버에 전달하고, 이후에는 이메일 로그인과 같은 JWT 체계를 쓴다.
+- 카카오 네이티브 SDK는 Expo Go에서 동작하지 않으므로, 소셜 로그인 연동부터는 Expo dev build로 개발한다.
 - 모바일은 토큰을 SecureStore에 저장한다.
 - 여러 요청이 동시에 401을 받아도 refresh는 한 번만 요청한다. 서버의 refresh rotation과 충돌하지 않게 하기 위해서다.
 - 웹은 XSS와 CSRF 위험을 고려해 토큰 저장 방식을 별도로 결정한다(httpOnly 쿠키 등).
@@ -228,13 +230,35 @@ UI 컴포넌트는 플랫폼별로 각 앱 안에 두되, 같은 토큰을 사�
 
 ## 5. 백엔드 아키텍처
 
+### 도메인 모델
+
+| 도메인         | 의미                                   | 담당 기능                                                |
+| -------------- | -------------------------------------- | -------------------------------------------------------- |
+| User           | 서비스 계정                            | 계정 정보, 탈퇴                                          |
+| UserIdentity   | 로그인 수단                            | 이메일(비밀번호 해시), 카카오, 애플 로그인, 계정 연결    |
+| Family         | 가족 공간                              | 가족 생성, 가족 정보, 초대 코드 발급/만료                |
+| Member         | 사용자의 가족 소속                     | 초대 코드 가입, 역할(방장/구성원), 호칭, 구성원 목록     |
+| Question       | 질문 은행                              | 질문 내용, 카테고리                                      |
+| FamilyQuestion | 가족별 주차 질문 배정                  | 이번 주 질문, 주차별 질문 목록                           |
+| VideoAnswer    | 구성원이 질문에 남긴 영상 답변         | 업로드, 영상 상태, 썸네일·제목·요약, 아카이브             |
+| Comment        | 답변에 달린 댓글                       | 댓글 작성/조회/삭제                                      |
+| Reaction       | 답변에 대한 반응                       | 구성원당 답변 하나에 반응 하나                           |
+| AnalysisJob    | 영상 답변에 대한 AI 분석 작업 기록     | 분석 진행 상태, 단계별 결과, 재시도, 모델/프롬프트 버전  |
+
+- **User와 Member를 나눈다.** 인증은 User 기준, 가족 리소스 인가는 Member 기준으로 처리한다.
+- **User와 UserIdentity를 나눈다.** 한 계정이 여러 로그인 수단을 가질 수 있다.
+- **Question과 FamilyQuestion을 나눈다.** 가족마다 시작 시점이 달라 같은 "1주차"라도 가족별로 배정이 다르고, 이후 가족별 질문 추천도 이 구조 위에서 동작한다.
+- **VideoAnswer와 AnalysisJob을 나눈다.** 재분석하면 답변 하나에 분석 기록이 여러 개 생기고, 시도 횟수·모델 버전 같은 운영 데이터는 답변 자체의 정보와 성격이 다르다.
+- Outbox 이벤트, refresh token, 검색용 임베딩은 도메인이 아닌 구현 테이블로 ERD 단계에서 다룬다.
+
 ### 패키지 구조
 
 ```txt
 com.woorizip
-  auth/        로그인, 토큰 발급/재발급
+  auth/        이메일/소셜 로그인, 토큰 발급/재발급, 계정 연결
+  user/        계정
   family/      가족, 멤버십, 초대 코드
-  question/    주차별 질문
+  question/    질문 은행, 가족별 주차 질문
   answer/      영상 답변, 업로드
   comment/     댓글, 반응
   analysis/    분석 job, 결과 반영
@@ -247,9 +271,33 @@ com.woorizip
 
 ### 인증과 인가
 
+#### 로그인
+
+```txt
+[이메일]
+앱 -> API: 이메일, 비밀번호 -> BCrypt 해시 비교 -> JWT 발급
+
+[소셜: 카카오, 애플]
+앱: 제공자 SDK로 로그인 -> 제공자 토큰 획득
+앱 -> API: 제공자 토큰 전달
+API: 토큰 검증 (애플: ID token 서명을 공개키(JWKS)로 검증, 카카오: ID token 검증 또는 사용자 정보 API 조회)
+API: (provider, providerUserId)로 UserIdentity 조회 -> 없으면 User와 함께 생성 -> JWT 발급
+```
+
+- Spring Security의 기본 OAuth2 로그인은 브라우저 리다이렉트 방식이라 모바일 앱에는 맞지 않는다. 앱은 제공자 토큰을 서버가 직접 검증하는 방식을 쓰고, 이후 웹 클라이언트에는 리다이렉트 방식을 추가한다. 두 방식 모두 같은 User와 JWT 체계로 모인다.
+- 같은 이메일이라도 로그인 수단이 다르면 자동으로 계정을 합치지 않는다. 제공자마다 이메일 검증 수준이 달라 자동 병합은 계정 탈취 위험이 있으므로, 로그인한 상태에서 명시적으로 연결한다.
+- 이메일 인증과 비밀번호 재설정은 메일 발송 연동이 필요하므로 배포 단계 전까지 추가한다.
+
+#### 토큰
+
 - access token은 짧게, refresh token은 DB에 저장하고 재발급 시 rotation한다.
+- 이미 사용된 refresh token으로 재발급을 시도하면 탈취로 보고 해당 사용자의 refresh token을 모두 폐기한다.
+
+#### 인가
+
 - 가족 단위 리소스는 모두 요청한 사용자의 멤버십을 확인한 뒤 접근한다. 조회 쿼리에는 항상 `familyId` 조건을 포함한다.
-- 초대 코드 가입은 `(family_id, user_id)` 유니크 제약으로 중복 가입을 막고, 가족 인원 제한은 락으로 동시 가입을 제어한다.
+- 한 사용자는 처음에는 하나의 가족에만 속할 수 있다. 이 규칙은 Member 테이블의 `user_id` 유니크 제약으로 보장하고, 여러 가족 소속으로 확장할 때는 제약을 `(family_id, user_id)`로 바꾼다.
+- 가족 인원 제한은 락으로 동시 가입을 제어한다.
 
 ### Transactional Outbox
 
@@ -438,17 +486,24 @@ UPLOADING -> UPLOADED -> ANALYZING -> READY
 ## 9. 로컬 개발 환경
 
 ```txt
-docker compose up
-  postgres    PostgreSQL + pgvector
-  localstack  S3, SQS
+infra/
+  docker-compose.yml       로컬 인프라 정의
+  .env.example             포트, 계정, 버킷 이름 기본값
+  localstack/init-aws.sh   LocalStack 기동 시 S3 버킷과 SQS 큐 생성
+
+cd infra && docker compose up -d
+  postgres    PostgreSQL 17 + pgvector   localhost:5432
+  localstack  S3, SQS                    localhost:4566
+    - S3 버킷: woorizip-media-local
+    - SQS 큐: analysis-jobs, analysis-results (각각 DLQ, 최대 수신 3회)
 ```
 
 API 서버와 AI 서버는 로컬에서 직접 실행하고, 위 인프라에 연결한다. 통합 테스트는 Testcontainers로 같은 구성을 테스트마다 띄운다.
 
 환경은 `local`, `dev`, `prod`로 나누고, 비밀값은 레포에 두지 않는다. 레포에는 `.env.example`만 둔다.
 
-## 10. 도메인 전략
+## 10. 서비스 도메인(URL) 전략
 
-기존 `woorizip.site` 도메인은 팀 프로젝트 배포 과정에서 사용된 흔적이 있으므로, 개인 리빌드의 공식 도메인으로 재사용할지는 소유권과 팀 프로젝트와의 경계를 확인한 뒤 결정한다.
+기존 `woorizip.site` 도메인은 팀 프로젝트 배포 과정에서 사용된 흔적이 있으므로, 리빌드 서비스의 도메인으로 재사용할지는 소유권과 팀 프로젝트와의 경계를 확인한 뒤 결정한다.
 
-초기에는 Expo preview URL, API 배포 플랫폼 기본 URL, CloudFront 기본 도메인으로 개발한다. 서비스 배포가 안정화된 이후 개인 소유 도메인 또는 별도 서브도메인을 연결한다.
+초기에는 Expo preview URL, API 배포 플랫폼 기본 URL, CloudFront 기본 도메인으로 개발한다. 서비스 배포가 안정화된 이후 자체 도메인 또는 별도 서브도메인을 연결한다.

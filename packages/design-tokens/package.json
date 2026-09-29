@@ -1,0 +1,8 @@
+{
+  "name": "@woorizip/design-tokens",
+  "version": "0.0.0",
+  "private": true,
+  "description": "플랫폼 중립 디자인 토큰",
+  "main": "src/index.ts",
+  "types": "src/index.ts"
+}

@@ -26,6 +26,7 @@
 - Transactional Outbox로 답변 저장과 분석 요청 발행의 정합성 보장
 - AI 결과를 결과 큐로 받아 DB 쓰기 주체를 API 서버로 일원화
 - 업로드 완료 등록과 메시지 중복 수신에 대한 멱등성 처리
+- 이메일 로그인과 카카오/애플 소셜 로그인을 하나의 계정 모델로 통합
 - 가족 멤버십 기반 인가, 초대 코드 가입 동시성 처리
 - Testcontainers, LocalStack 통합 테스트와 k6 부하 테스트
 
@@ -44,6 +45,7 @@
 | Web App       | React, TypeScript                                       |
 | Client Shared | Design Tokens, OpenAPI Client, TanStack Query, Zod      |
 | API Server    | Spring Boot 3, Java 21, Spring Security, JWT            |
+| Auth          | 이메일, 카카오, 애플 로그인                             |
 | Persistence   | Spring Data JPA, QueryDSL, Flyway                       |
 | Database      | PostgreSQL, pgvector                                    |
 | AI Server     | FastAPI, Python, faster-whisper, MediaPipe              |
@@ -52,14 +54,14 @@
 | Test          | Jest, RNTL, Maestro, Playwright, JUnit5, Testcontainers, pytest, k6 |
 | CI            | GitHub Actions                                          |
 
-## 디렉터리 구조 (예정)
+## 디렉터리 구조
 
 ```txt
 apps/
-  mobile/          Expo 앱
-  web/             웹 클라이언트
-  api/             Spring Boot API 서버
-  ai/              FastAPI AI 서버, 분석 worker
+  mobile/          Expo 앱 (expo-router)
+  api/             Spring Boot API 서버 (예정)
+  ai/              FastAPI AI 서버, 분석 worker (예정)
+  web/             웹 클라이언트 (예정)
 
 packages/
   design-tokens/   플랫폼 중립 디자인 토큰
@@ -67,11 +69,25 @@ packages/
   core/            검증 스키마, 도메인 상수, 공통 로직
 
 infra/
-  docker-compose.yml   PostgreSQL(pgvector), LocalStack
+  docker-compose.yml       PostgreSQL(pgvector), LocalStack(S3, SQS)
+  localstack/init-aws.sh   로컬 S3 버킷, SQS 큐 생성
 
 docs/
   rebuild-plan.md
   architecture.md
+```
+
+## 로컬 실행
+
+```bash
+# 의존성 설치 (npm workspace)
+npm install
+
+# 로컬 인프라: PostgreSQL(5432), LocalStack(4566)
+cd infra && docker compose up -d
+
+# 모바일 앱
+npm run mobile:start
 ```
 
 ## 문서
@@ -81,7 +97,10 @@ docs/
 
 ## 현재 상태
 
-초기 설계 및 레포지토리 세팅 단계입니다.
+1단계(기반 설계 및 모노레포 정리)를 진행하고 있습니다.
+
+- 완료: 리빌드 계획·아키텍처 문서, npm workspace 모노레포, Expo 앱 초기화와 라우팅 설정, 공유 패키지 구조, 로컬 인프라 구성
+- 진행 예정: 사용자 흐름과 화면 목록 정의, 이후 2단계 디자인 시스템 작업
 
 ## 원본 프로젝트
 

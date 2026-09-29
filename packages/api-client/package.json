@@ -1,0 +1,8 @@
+{
+  "name": "@woorizip/api-client",
+  "version": "0.0.0",
+  "private": true,
+  "description": "OpenAPI 스펙 기반 API 클라이언트",
+  "main": "src/index.ts",
+  "types": "src/index.ts"
+}
