@@ -24,6 +24,7 @@
 **백엔드**
 
 - Transactional Outbox로 답변 저장과 분석 요청 발행의 정합성 보장
+- 분석 요청과 푸시 알림을 같은 Outbox 이벤트 흐름으로 처리
 - AI 결과를 결과 큐로 받아 DB 쓰기 주체를 API 서버로 일원화
 - 업로드 완료 등록과 메시지 중복 수신에 대한 멱등성 처리
 - 이메일 로그인과 카카오/애플 소셜 로그인을 하나의 계정 모델로 통합
@@ -51,6 +52,7 @@
 | AI Server     | FastAPI, Python, faster-whisper, MediaPipe              |
 | Storage/CDN   | AWS S3, CloudFront                                      |
 | Queue         | AWS SQS                                                 |
+| Push          | Expo Push (FCM, APNs)                                   |
 | Test          | Jest, RNTL, Maestro, Playwright, JUnit5, Testcontainers, pytest, k6 |
 | CI            | GitHub Actions                                          |
 
@@ -94,13 +96,13 @@ npm run mobile:start
 
 - [리빌드 계획](./docs/rebuild-plan.md)
 - [아키텍처](./docs/architecture.md)
+- [사용자 흐름과 화면 목록](./docs/user-flows.md)
 
 ## 현재 상태
 
-1단계(기반 설계 및 모노레포 정리)를 진행하고 있습니다.
+1단계(기반 설계 및 모노레포 정리)를 마치고 2단계(디자인 시스템과 핵심 화면 디자인)를 준비하고 있습니다.
 
-- 완료: 리빌드 계획·아키텍처 문서, npm workspace 모노레포, Expo 앱 초기화와 라우팅 설정, 공유 패키지 구조, 로컬 인프라 구성
-- 진행 예정: 사용자 흐름과 화면 목록 정의, 이후 2단계 디자인 시스템 작업
+- 완료: 리빌드 계획·아키텍처·사용자 흐름 문서, npm workspace 모노레포, Expo 앱 초기화와 라우팅 설정, 공유 패키지 구조, 로컬 인프라 구성
 
 ## 원본 프로젝트
 
