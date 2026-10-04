@@ -22,7 +22,7 @@ Outbox Relay -> SQS analysis-jobs
 [AI 분석]
 AI Worker <- SQS analysis-jobs
 -> S3에서 영상 다운로드
--> TRANSCRIBE -> SUMMARIZE -> THUMBNAIL -> EMBED
+-> TRANSCODE -> TRANSCRIBE -> SUMMARIZE -> THUMBNAIL -> EMBED
 -> 썸네일을 S3에 업로드
 -> SQS analysis-results로 결과 발행
 
@@ -226,7 +226,8 @@ UI 컴포넌트는 플랫폼별로 각 앱 안에 두되, 같은 토큰을 사�
 
 ### 영상 업로드
 
-- presigned URL로 S3에 직접 업로드하고 진행률을 표시한다.
+- 촬영은 H.264 mp4로 고정하고 최대 3분으로 제한한다.
+- presigned URL로 S3에 직접 업로드하고 진행률을 표시한다. presigned URL에는 허용 용량과 콘텐츠 타입 조건을 건다.
 - 업로드 실패 시 재시도할 수 있고, 완료 등록 API는 서버에서 멱등하게 처리되므로 재요청해도 안전하다.
 - 업로드 중 앱을 벗어나는 경우의 처리 범위는 모바일 앱 구현 단계에서 결정한다.
 
@@ -316,7 +317,24 @@ API: (provider, providerUserId)로 UserIdentity 조회 -> 없으면 User와 함�
 
 - 가족 단위 리소스는 모두 요청한 사용자의 멤버십을 확인한 뒤 접근한다. 조회 쿼리에는 항상 `familyId` 조건을 포함한다.
 - 한 사용자는 처음에는 하나의 가족에만 속할 수 있다. 이 규칙은 활성 구성원(`status = 'ACTIVE'`)에 대한 `user_id` 부분 유니크 인덱스로 보장하고, 여러 가족 소속으로 확장할 때는 `(family_id, user_id)` 기준으로 바꾼다.
-- 가족 인원 제한은 락으로 동시 가입을 제어한다.
+- 가족 인원 상한(20명)은 락으로 동시 가입을 제어한다.
+
+#### 여러 가족 소속 확장 대비
+
+지금은 한 가족만 허용하지만, 이후 여러 가족 소속(예: 친가와 처가에 동시 소속)으로 확장할 때 DB와 API를 바꾸지 않도록 다음 원칙을 처음부터 지킨다.
+
+- **API 경로에 가족을 명시한다.** 가족 단위 리소스는 `/families/{familyId}/questions/current`처럼 경로에 `familyId`를 둔다. 서버가 로그인한 사용자로부터 가족을 추론하지 않는다.
+- **가족 안의 활동은 Member를 참조한다.** 답변, 댓글, 반응, 알림 수신자는 User가 아닌 Member를 기준으로 저장한다. 이름, 사진, 호칭도 Member에 두므로 가족마다 다르게 표시할 수 있다.
+- **푸시 알림 데이터에 `familyId`를 포함한다.** 알림을 눌렀을 때 어느 가족의 화면으로 이동할지 알 수 있다.
+
+확장 시 변경 범위:
+
+| 영역   | 변경                                                          |
+| ------ | ------------------------------------------------------------- |
+| DB     | 활성 구성원 `user_id` 부분 유니크 인덱스를 `(family_id, user_id)` 기준으로 변경 |
+| API    | 내 가족 목록 조회 추가, 가족 단위 알림 설정                   |
+| 클라이언트 | 가족 전환 UI, 현재 가족 상태 관리, 알림에 가족 이름 표시   |
+| 정책   | 가족 나가기·탈퇴 시 가족별로 답변 남기기/삭제 선택            |
 
 ### Transactional Outbox
 
@@ -436,11 +454,12 @@ AI 서버는 하나의 Python 코드베이스에서 두 가지 역할을 한다.
 ### 분석 파이프라인
 
 ```txt
-TRANSCRIBE -> SUMMARIZE -> THUMBNAIL -> EMBED
+TRANSCODE -> TRANSCRIBE -> SUMMARIZE -> THUMBNAIL -> EMBED
 ```
 
 | 단계       | 입력           | 출력                | 구현                                            |
 | ---------- | -------------- | ------------------- | ----------------------------------------------- |
+| TRANSCODE  | 원본 영상      | 재생용 영상(H.264 mp4, 해상도·비트레이트 통일) | ffmpeg                         |
 | TRANSCRIBE | 영상 오디오    | 전사 텍스트         | faster-whisper                                  |
 | SUMMARIZE  | 전사 텍스트    | 제목, 요약          | LLM (제공자 추상화), 구조화 출력                |
 | THUMBNAIL  | 영상 프레임    | 썸네일 이미지       | MediaPipe 얼굴 검출, OpenCV 선명도 점수         |
@@ -449,6 +468,15 @@ TRANSCRIBE -> SUMMARIZE -> THUMBNAIL -> EMBED
 - 각 단계의 결과, 처리 시간, 사용한 모델/프롬프트 버전을 결과 메시지에 포함한다.
 - 필수 단계(TRANSCRIBE, SUMMARIZE, THUMBNAIL)가 실패하면 job은 `FAILED`다.
 - 선택 단계(EMBED)가 실패하면 답변은 `READY`로 두고 검색 대상에서만 제외한 뒤, 이후 재처리한다.
+- TRANSCODE가 실패하면 원본으로 재생한다. 앱은 촬영 시 H.264 mp4로 고정하므로 원본도 대부분의 기기에서 재생된다.
+
+#### 영상 형식 통일
+
+iPhone은 기본 설정에서 HEVC(.mov)로 촬영하고, 일부 Android 기기와 웹 브라우저는 HEVC를 재생하지 못한다. 그대로 두면 한 구성원이 올린 영상을 다른 구성원이 재생하지 못할 수 있다.
+
+- 1차: 앱에서 촬영할 때 코덱과 컨테이너를 H.264 mp4로 고정한다.
+- 2차: TRANSCODE 단계에서 서버가 재생용 영상을 같은 형식, 해상도, 비트레이트로 다시 만든다. 촬영 설정이 적용되지 않은 기기에 대한 안전장치이면서, 저장 용량과 재생 시작 시간도 줄인다.
+- 재생용 영상과 원본은 별도 S3 key로 저장하고, 재생에는 재생용 영상을 우선 사용한다.
 
 ### LLM 제공자 추상화
 
@@ -555,7 +583,7 @@ UPLOADING -> UPLOADED -> ANALYZING -> READY
 ### AnalysisJob
 
 - 상태: `PENDING`, `RUNNING`, `SUCCEEDED`, `FAILED`
-- 단계별 상태와 결과: TRANSCRIBE, SUMMARIZE, THUMBNAIL, EMBED
+- 단계별 상태와 결과: TRANSCODE, TRANSCRIBE, SUMMARIZE, THUMBNAIL, EMBED
 - 시도 횟수, 모델 버전, 프롬프트 버전, 단계별 처리 시간
 
 ## 9. 로컬 개발 환경
