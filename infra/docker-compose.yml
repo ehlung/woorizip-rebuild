@@ -17,22 +17,5 @@ services:
       timeout: 3s
       retries: 10
 
-  localstack:
-    # 2026.x 이미지부터 인증 토큰이 필요하므로, 토큰 없이 동작하는 마지막 버전(4.14)으로 고정한다.
-    image: localstack/localstack:4.14
-    environment:
-      SERVICES: s3,sqs
-      AWS_DEFAULT_REGION: ${AWS_REGION:-ap-northeast-2}
-      S3_BUCKET: ${S3_BUCKET:-woorizip-media-local}
-    ports:
-      - "${LOCALSTACK_PORT:-4566}:4566"
-    volumes:
-      - ./localstack/init-aws.sh:/etc/localstack/init/ready.d/init-aws.sh:ro
-    healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:4566/_localstack/init/ready | grep -q '\"completed\": true'"]
-      interval: 5s
-      timeout: 3s
-      retries: 20
-
 volumes:
   postgres-data:

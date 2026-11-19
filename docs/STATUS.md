@@ -40,7 +40,7 @@
 | `apps/api` | 비어 있음 |
 | `apps/ai` | 비어 있음 |
 | `packages/design-tokens`, `api-client`, `core` | 패키지 뼈대만 있음 |
-| 로컬 인프라 | Docker Compose로 PostgreSQL(pgvector), LocalStack 구성 |
+| 로컬 인프라 | Docker Compose로 PostgreSQL(pgvector) 구성. S3는 개발용 버킷을 쓰며 아직 만들지 않음 (ADR 0016) |
 
 ## 기능 단계와 진행 상태
 
