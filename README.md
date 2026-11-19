@@ -1,110 +1,106 @@
-# woorizip-rebuild
+# 우리.zip
 
-가족 Q&A 기반 영상 아카이빙 서비스 **우리.zip**의 리빌드 프로젝트입니다.
+매주 하나의 질문에 영상으로 답하며, 떨어져 사는 가족의 얼굴과 목소리, 그리고 이야기를 함께 쌓아 가는 가족 기록 앱입니다.
 
-기존 팀 캡스톤 프로젝트는 로컬 환경에서 시연 가능한 수준까지 구현되었지만, 배포 환경에서는 서비스 간 연결이 안정적으로 동작하지 않았습니다. 이 프로젝트는 서비스 아이디어와 핵심 기능은 이어받고, 클라이언트, 백엔드, AI 전 영역을 **실제 운영 가능한 구조**로 다시 설계합니다.
+> 2025 창의설계경진대회 **대상(1등)** 수상작
 
-## 리빌드 방향
+우리.zip은 캡스톤 디자인 프로젝트로 시작해 2025 창의설계경진대회에서 대상을 받았습니다. 이 저장소는 대회에서 선보인 서비스를 실제 가족이 매주 쓰는 서비스로 완성하기 위해 다시 만드는 리빌드 프로젝트입니다.
 
-- **클라이언트**: 디자인 시스템을 새로 정의하고, 모바일 앱을 먼저 만든 뒤 웹 클라이언트를 별도로 구축합니다. 두 클라이언트는 디자인 토큰, API 클라이언트, 공통 로직을 공유합니다.
-- **백엔드**: Spring Boot 위에서 도메인 중심 구조, 가족 단위 인가, 비동기 처리의 정합성을 다룹니다.
-- **AI**: 영상 분석을 단계별 비동기 파이프라인으로 재구성하고, 평가 기준을 세워 품질을 측정합니다. 분석 결과를 활용한 의미 검색도 제공합니다.
-- **인프라**: 영상은 S3에 직접 업로드하고, 분석은 SQS로 분리하며, 미디어는 CloudFront로 전달합니다.
+리빌드는 기존 구현을 분석해 보완할 점을 찾는 데서 시작했습니다. 문제마다 해결 방법을 비교해 결정 과정을 기록했고, 이 결정대로 만든 뒤 실사용자의 피드백으로 다시 확인합니다.
 
-## 주요 설계 과제
+원본 프로젝트: [Frontend](https://github.com/Capstone-3Team/WooriZip-FE) · [Backend](https://github.com/Capstone-3Team/WooriZip-BE) · [AI](https://github.com/Capstone-3Team/WooriZip-AI)
 
-**프론트엔드**
+<br>
 
-- 디자인 토큰과 공통 컴포넌트 기반 화면 구성, 접근성 기준 반영
-- 모바일/웹 간 토큰, OpenAPI 기반 API 클라이언트, 공통 로직 공유
-- 토큰 자동 갱신과 동시 요청 중 갱신 요청 단일화
-- 서버 상태 캐싱, 낙관적 업데이트, 분석 상태 polling
-- 영상 업로드 진행률 표시와 실패 복구
+## 서비스 소개
 
-**백엔드**
+### 배경
 
-- Transactional Outbox로 답변 저장과 분석 요청 발행의 정합성 보장
-- 분석 요청과 푸시 알림을 같은 Outbox 이벤트 흐름으로 처리
-- AI 결과를 결과 큐로 받아 DB 쓰기 주체를 API 서버로 일원화
-- 업로드 완료 등록과 메시지 중복 수신에 대한 멱등성 처리
-- 이메일 로그인과 카카오/애플 소셜 로그인을 하나의 계정 모델로 통합
-- 가족 멤버십 기반 인가, 초대 코드 가입 동시성 처리
-- Testcontainers, LocalStack 통합 테스트와 k6 부하 테스트
+일과 결혼으로 가족이 여러 곳에 흩어져 살면서, 서로의 일상을 나눌 기회는 점점 줄어듭니다. 명절에 잠깐 얼굴을 보는 것이 전부가 되고, 부모님과 조부모님의 목소리와 말투, 살아온 이야기는 어디에도 남지 않은 채 시간이 흐릅니다.
 
-**AI**
+우리.zip은 가족이 부담 없이 서로의 이야기를 나누고, 그 순간을 영상으로 남겨 언제든 다시 꺼내 볼 수 있게 합니다.
 
-- 영상 변환 → 전사 → 요약 → 썸네일 → 임베딩 단계별 비동기 파이프라인
-- STT 모델 비교, 평가셋 기반 품질 측정
-- LLM 제공자 추상화와 프롬프트 버전 관리
-- pgvector 기반 가족 아카이브 의미 검색
+### 주요 기능
 
-## 기술 스택
+#### 1. 매주 도착하는 가족 질문
 
-| 영역          | 스택                                                    |
-| ------------- | ------------------------------------------------------- |
-| Mobile App    | Expo, React Native, TypeScript                          |
-| Web App       | React, TypeScript                                       |
-| Client Shared | Design Tokens, OpenAPI Client, TanStack Query, Zod      |
-| API Server    | Spring Boot 3, Java 21, Spring Security, JWT            |
-| Auth          | 이메일, 카카오, 애플 로그인                             |
-| Persistence   | Spring Data JPA, QueryDSL, Flyway                       |
-| Database      | PostgreSQL, pgvector                                    |
-| AI Server     | FastAPI, Python, faster-whisper, MediaPipe              |
-| Storage/CDN   | AWS S3, CloudFront                                      |
-| Queue         | AWS SQS                                                 |
-| Push          | Expo Push (FCM, APNs)                                   |
-| Test          | Jest, RNTL, Maestro, Playwright, JUnit5, Testcontainers, pytest, k6 |
-| CI            | GitHub Actions                                          |
+무슨 이야기를 해야 할지 고민하지 않아도 됩니다. 매주 가족 모두에게 같은 질문이 도착해, 평소에 묻지 못했던 이야기를 자연스럽게 꺼낼 수 있습니다.
 
-## 디렉터리 구조
+#### 2. 영상으로 남기는 답변
 
-```txt
-apps/
-  mobile/          Expo 앱 (expo-router)
-  api/             Spring Boot API 서버 (예정)
-  ai/              FastAPI AI 서버, 분석 worker (예정)
-  web/             웹 클라이언트 (예정)
+글을 쓰는 대신 휴대폰 카메라 앞에서 말로 답합니다. 최대 3분 영상에 표정과 목소리가 그대로 담겨, 사진이나 글로는 남지 않는 그 사람다움을 기록합니다.
 
-packages/
-  design-tokens/   플랫폼 중립 디자인 토큰
-  api-client/      OpenAPI 기반 API 클라이언트
-  core/            검증 스키마, 도메인 상수, 공통 로직
+#### 3. AI가 정리하는 기록
 
-infra/
-  docker-compose.yml       PostgreSQL(pgvector), LocalStack(S3, SQS)
-  localstack/init-aws.sh   로컬 S3 버킷, SQS 큐 생성
+영상을 올리면 AI가 내용을 듣고 제목과 요약을 쓰고, 가장 잘 나온 장면을 골라 썸네일로 만듭니다. 올린 뒤에는 앱을 닫아도 되고, 정리가 끝나면 알림으로 알려 줍니다.
 
-docs/
-  rebuild-plan.md
-  architecture.md
+#### 4. 주차별 보관함
+
+지난 질문과 가족의 답변이 주차별로 차곡차곡 쌓입니다. 시간이 지날수록 우리 가족만의 이야기 보관함이 됩니다.
+
+#### 5. 누구나 쓰기 쉬운 화면
+
+글자, 버튼, 간격이 함께 커지는 화면 크기 3단계를 제공합니다. 연세가 많은 가족도 혼자 답변을 찍고 가족의 이야기를 볼 수 있습니다.
+
+### 이용 흐름
+
+1. 가족 공간을 만들고 초대 코드로 가족을 초대합니다.
+2. 매주 새 질문이 도착하면 알림을 받습니다.
+3. 질문에 대한 답을 영상으로 찍어 올립니다.
+4. AI가 제목, 요약, 썸네일을 만들어 기록을 정리합니다.
+5. 가족의 답변을 보고 반응을 남깁니다.
+6. 지난 기록은 보관함에서 주차별로 다시 봅니다.
+
+<br>
+
+## 기술 구성
+
+```mermaid
+flowchart LR
+    app["앱 (Expo)"]
+    api(("API 서버<br/>(Spring Boot)"))
+    worker(("AI 워커<br/>(Python)"))
+    db[("PostgreSQL")]
+    s3[("S3")]
+    ext["외부 AI<br/>(STT, 요약)"]
+
+    app -- "요청" --> api
+    app -- "영상 업로드·재생" --> s3
+    api -- "읽기·쓰기" --> db
+    worker -- "작업 요청, 결과 보고" --> api
+    s3 -- "영상" --> worker
+    worker -- "오디오, transcript" --> ext
 ```
 
-## 로컬 실행
+| 영역 | 기술 |
+| --- | --- |
+| 앱 | Expo, React Native, TypeScript |
+| API 서버 | Spring Boot, PostgreSQL, Flyway |
+| AI 워커 | Python (STT, 요약 제공자는 평가 중) |
+| 인프라 | AWS S3, Parameter Store, GitHub Actions |
 
-```bash
-# 의존성 설치 (npm workspace)
-npm install
-
-# 로컬 인프라: PostgreSQL(5432), LocalStack(4566)
-cd infra && docker compose up -d
-
-# 모바일 앱
-npm run mobile:start
-```
+<br>
 
 ## 문서
 
-- [리빌드 계획](./docs/rebuild-plan.md)
-- [아키텍처](./docs/architecture.md)
-- [사용자 흐름과 화면 목록](./docs/user-flows.md)
+| 문서 | 내용 |
+| --- | --- |
+| [기존 프로젝트 분석](docs/01-legacy-analysis.md) | 기존 구현에서 찾은 보완할 점과 근거 |
+| [도메인과 문제 정의](docs/02-domain-and-problem.md) | 서비스가 풀려는 문제, 조건, 기능 단계 |
+| [결정 기록 (ADR)](docs/adr/) | 문제마다 무엇을 왜 골랐는지 |
+| [아키텍처](docs/03-architecture.md) | 구성 요소, 흐름, 상태 |
+| [평가 기준](docs/04-evaluation.md) | 결정이 맞았는지 확인하는 기준 |
+| [사용자 흐름](docs/user-flows.md) | 앱의 흐름과 화면 |
+| [현황](docs/STATUS.md) | 진행 상태와 로드맵 |
 
-## 현재 상태
+<br>
 
-1단계(기반 설계 및 모노레포 정리)를 마치고 2단계(디자인 시스템과 핵심 화면 디자인)를 준비하고 있습니다.
+## 진행 상황
 
-- 완료: 리빌드 계획·아키텍처·사용자 흐름 문서, npm workspace 모노레포, Expo 앱 초기화와 라우팅 설정, 공유 패키지 구조, 로컬 인프라 구성
+설계 문서를 마치고 첫 버전(MVP) 구현을 준비하고 있습니다. 2026년 안에 첫 테스트 배포를 하고, 실사용자의 피드백을 반영해 정식 출시까지 진행합니다.
 
-## 원본 프로젝트
-
-우리.zip은 팀 캡스톤 프로젝트로 시작되었습니다.  
-이 레포지토리는 원본 팀 프로젝트와 독립적으로 진행하는 리빌드이며, 원본 코드를 그대로 가져오지 않고 서비스 아이디어와 핵심 기능을 바탕으로 새로 설계하고 구현합니다.
+```bash
+npm install                                 # 의존성 설치
+cd infra && docker compose up -d && cd ..   # 로컬 PostgreSQL
+npm run mobile:start                        # 모바일 앱
+```

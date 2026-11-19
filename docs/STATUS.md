@@ -27,9 +27,9 @@
 | [ADR](adr/) | 17개 중 13개 채택(0001~0004, 0006~0011, 0014~0016), 2개 제안(0005, 0012) |
 | [03-architecture.md](03-architecture.md) | 초안 완료. 미정 항목은 10장 |
 | [04-evaluation.md](04-evaluation.md) | 초안 완료 (assertion 82개, rubric 초안, 운영 지표 기준값 초안) |
-| README.md | 새 구조에 맞게 다시 쓸 예정 |
-| [user-flows.md](user-flows.md) | 단계 표시와 우선순위 반영 필요 |
-| rebuild-plan.md | 내용을 다른 문서로 옮긴 뒤 삭제 예정 |
+| [README.md](../README.md) | 새 구조에 맞게 다시 씀 |
+| [user-flows.md](user-flows.md) | 단계 표시와 지금까지의 결정 반영 |
+| rebuild-plan.md, architecture.md | 초기 설계안. 내용을 다른 문서로 옮긴 뒤 삭제 예정 |
 
 ## 코드와 환경
 
