@@ -80,6 +80,7 @@ AWS Systems Manager Parameter Store(SecureString) 또는 Secrets Manager에 두�
 - 설정 이름과 기본값은 코드의 설정 파일에 두고, 환경마다 다른 값(주소, 버킷 이름 등)은 환경 변수나 Parameter Store에서 덮어쓴다. Spring은 환경 변수가 설정 파일 값을 덮어쓴다(https://docs.spring.io/spring-boot/reference/features/external-config.html).
 - 서비스 주소는 코드에 쓰지 않고 설정에서만 읽는다(P-02).
 - 로컬 개발은 Docker Compose와 LocalStack으로 같은 구조를 흉내 내고, 로컬 전용 값은 커밋하지 않는 `.env.local`에 둔다. 저장소에는 값 없이 이름만 적은 `.env.example`을 둔다.
+  - 로컬 개발 구성은 [ADR 0016](0016-local-and-test.md)으로 바뀌었다(2026-11-20). LocalStack은 쓰지 않는다.
 - 로컬과 운영의 차이는 "값"뿐이고 "설정 항목"은 같게 유지한다. 운영에만 있는 설정 항목이 생기지 않도록, 필수 설정이 빠지면 로컬에서도 시작하지 않게 한다.
 
 ## 결과
