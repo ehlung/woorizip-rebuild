@@ -24,9 +24,9 @@
 | --- | --- |
 | [01-legacy-analysis.md](01-legacy-analysis.md) | 초안 완료 |
 | [02-domain-and-problem.md](02-domain-and-problem.md) | 초안 완료 |
-| [ADR](adr/) | 17개 중 4개 채택(0001~0004), 1개 제안(0005) |
+| [ADR](adr/) | 17개 중 11개 채택(0001~0004, 0006~0011, 0014), 2개 제안(0005, 0012) |
 | 03-architecture.md | 작성 전. 기존 `architecture.md`를 다시 써서 만든다 |
-| 04-evaluation.md | 작성 전 |
+| [04-evaluation.md](04-evaluation.md) | 초안 완료 (assertion 62개, rubric 초안, 운영 지표 기준값 초안) |
 | README.md | 새 구조에 맞게 다시 쓸 예정 |
 | [user-flows.md](user-flows.md) | 단계 표시와 우선순위 반영 필요 |
 | rebuild-plan.md | 내용을 다른 문서로 옮긴 뒤 삭제 예정 |
@@ -72,7 +72,7 @@
 | | 공통 상태 (로딩, 빈 화면, 오류) | 미착수 |
 | 출시 필수 | 계정 삭제 요청 웹 페이지 | 미착수 |
 | | 개인정보 처리방침 | 미착수 |
-| 결정 | AI 제공자 선택 (STT, 요약) | 미착수 |
+| 결정 | AI 제공자 선택 (STT, 요약) | 후보 선별 완료, 품질 평가 전 ([ADR 0012](adr/0012-ai-provider.md)) |
 
 ### 1단계 (사용자 맞춤)
 
