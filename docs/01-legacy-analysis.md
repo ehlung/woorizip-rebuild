@@ -87,7 +87,7 @@ HTTPS 페이지인 FE가 HTTP인 AI 서버를 직접 호출하면 브라우저�
 | P-16 | 지난 주차를 선택해도 이번 주 내용이 나온다 | `WeeklyRecords.jsx:196-201`, `WeekAnswer.jsx:71,229` | 높음 | 0 |
 | P-17 | 목록 조회에서 N+1 쿼리가 발생한다 | `VideoAnswerService.java:103-106` | 중간 | 0 |
 | P-18 | AI 결과의 품질을 확인할 장치가 없다 | `thumb_stt.py:177,288-307` | 중간 | 0 |
-| P-19 | 말한 내용 전체(전사문)를 남기지 않는다 | `thumb_stt.py:285-311` | 중간 | 0, 2 |
+| P-19 | 말한 내용 전체(transcript)를 남기지 않는다 | `thumb_stt.py:285-311` | 중간 | 0, 2 |
 | P-20 | 외부 AI 전송 동의와 약관 검토가 없다 | `thumb_stt.py:285-303` | 높음 | 0 |
 | P-21 | AI 서버가 인증 없이 공개되어 있었다 | `app.py:26,117,234` | 높음 | 0 |
 | P-22 | 정의되지 않은 디자인 토큰이 경고 없이 무시된다 | `Button.jsx:33` | 중간 | 0 |
@@ -292,7 +292,7 @@ if (cached == null) {
 <details>
 <summary>P-10. 앱에서 업로드 실패를 복구할 수 없다</summary>
 
-업로드는 `fetch`로 보내서 진행률을 알 수 없고, 취소와 타임아웃도 없다. 실패하면 오류를 표시한 직후 다음 화면으로 이동해 메시지가 보이지 않는다. 녹화본은 화면 이동 데이터로만 들고 있어 새로고침하면 사라진다. 분석이 실패한 채 저장 화면으로 넘어가면 "영상 정보가 없어 저장할 수 없습니다"에서 막힌다(`FE src/pages/week-answer/AddVideoAnswer.jsx:189-191`).
+업로드는 `fetch`로 보내서 진행률을 알 수 없고, 취소와 타임아웃도 없다. 실패하면 오류를 표시한 직후 다음 화면으로 이동해 메시지가 보이지 않는다. 녹화본은 화면 이동 데이터(router state)로만 들고 있어 새로고침하면 사라진다. 분석이 실패한 채 저장 화면으로 넘어가면 "영상 정보가 없어 저장할 수 없습니다"에서 막힌다(`FE src/pages/week-answer/AddVideoAnswer.jsx:189-191`).
 
 `FE src/pages/week-answer/VideoProcessingLoading.jsx:93-101`
 
@@ -324,7 +324,7 @@ AI가 돌려준 base64 이미지를 `thumbnailUrl` 컬럼에 그대로 저장하
 <details>
 <summary>P-12. JWT 서명 키가 공개 저장소에 있다</summary>
 
-토큰 서명 키가 문자열 리터럴로 코드에 있고, 저장소는 공개 상태다. 토큰의 사용자 식별값은 이메일이므로, 이메일만 알면 누구나 그 사용자의 토큰을 만들 수 있었다. 기존 서버가 내려간 지금은 영향이 없지만 같은 키를 다시 쓰면 안 된다.
+JWT 서명 키가 문자열 리터럴로 코드에 있고, 저장소는 공개 상태다. 토큰의 사용자 식별값은 이메일이므로, 이메일만 알면 누구나 그 사용자의 토큰을 만들 수 있었다. 기존 서버가 내려간 지금은 영향이 없지만 같은 키를 다시 쓰면 안 된다.
 
 `BE global/security/JwtTokenProvider.java:14` (키 값은 가림)
 
@@ -476,9 +476,9 @@ result = json.loads(clean)
 </details>
 
 <details>
-<summary>P-19. 말한 내용 전체(전사문)를 남기지 않는다</summary>
+<summary>P-19. 말한 내용 전체(transcript)를 남기지 않는다</summary>
 
-오디오를 LLM에 바로 넣어 한 문장 요약과 제목만 받는다. 별도 받아쓰기 단계가 없어 전사문이 생기지 않는다. 요약이 틀렸을 때 원문과 비교할 수 없고, 이후 검색 기능에 쓸 텍스트가 없다.
+오디오를 LLM에 바로 넣어 한 문장 요약과 제목만 받는다. 별도 STT 단계가 없어 transcript가 생기지 않는다. 요약이 틀렸을 때 원문과 비교할 수 없고, 이후 검색 기능에 쓸 텍스트가 없다.
 
 `AI models/thumb_stt.py:288-311`
 
@@ -641,7 +641,7 @@ const recorder = new MediaRecorder(streamRef.current, {
 | 기존 설계 | 내용 | 해결하려던 문제 | 리빌드에서 검토할 것 | 단계 | 근거 |
 | --- | --- | --- | --- | --- | --- |
 | 썸네일 2단계 거르기 | 로컬에서 흐린 프레임과 얼굴을 먼저 거르고, 유료 Vision API는 후보 최대 12장에만 호출 | Vision API 호출 비용 | 웃는 얼굴 판정 같은 거르기 기준이 맞는지, 유료 API 없이도 되는지. 평가셋으로 비교 | 0 | `AI models/thumb_stt.py:85-100,135-177,223-224` |
-| 오디오만 보내 요약 | 영상 대신 오디오를 추출하고 1.2배속으로 줄여 LLM에 전달 | 토큰 수와 비용 | 받아쓰기를 따로 두면 배속이 정확도를 떨어뜨리는지 | 0 | `AI models/thumb_stt.py:258-266` |
+| 오디오만 보내 요약 | 영상 대신 오디오를 추출하고 1.2배속으로 줄여 LLM에 전달 | 토큰 수와 비용 | STT를 따로 두면 배속이 정확도를 떨어뜨리는지 | 0 | `AI models/thumb_stt.py:258-266` |
 | 커밋 후 비동기 실행 | 트랜잭션 커밋 이후에 별도 빈의 `@Async`로 후속 작업 실행 | 커밋 전 데이터 읽기, 같은 클래스 안에서 부르면 `@Async`가 무시되는 문제 | 서버가 재시작되면 실행 중인 작업이 사라짐. 작업 테이블, 큐와 비교 | 0 | `BE domain/VideoAnswer/service/VideoAnswerService.java:84-89` |
 | 처리 상태값 | `PENDING`, `PROCESSING`, `DONE`, `FAILED` | 진행 상태 표시 | 분석 단계별 상태가 따로 필요한지 | 0 | `BE domain/VideoAnswer/service/PetShortsAsyncService.java:36-79` |
 | 가족은 서버가 결정 | 목록 조회 시 클라이언트 값이 아니라 토큰의 사용자로 가족을 정함 | 클라이언트가 보낸 값의 위조 | 단건 조회까지 빠짐없이 적용할 방법 | 0 | `BE domain/VideoAnswer/service/VideoAnswerService.java:100` |
