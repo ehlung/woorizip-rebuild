@@ -29,7 +29,6 @@
 | [04-evaluation.md](04-evaluation.md) | 초안 완료 (assertion 88개, rubric 초안, 운영 지표 기준값 초안) |
 | [README.md](../README.md) | 새 구조에 맞게 다시 씀 |
 | [user-flows.md](user-flows.md) | 단계 표시와 지금까지의 결정 반영 |
-| rebuild-plan.md, architecture.md | 초기 설계안. 내용을 다른 문서로 옮긴 뒤 삭제 예정 |
 
 ## 코드와 환경
 

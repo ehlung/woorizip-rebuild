@@ -8,7 +8,7 @@
 
 ## 용어
 
-- **리빌드 초기 설계안**: ADR을 쓰기 전에 작성한 설계 문서다. 커밋 [`4412bfd`](https://github.com/ehlung/woorizip-rebuild/tree/4412bfd35da846135a3f0fabaa8abd959e2bcc32/docs)의 [`docs/architecture.md`](https://github.com/ehlung/woorizip-rebuild/blob/4412bfd35da846135a3f0fabaa8abd959e2bcc32/docs/architecture.md)와 [`docs/rebuild-plan.md`](https://github.com/ehlung/woorizip-rebuild/blob/4412bfd35da846135a3f0fabaa8abd959e2bcc32/docs/rebuild-plan.md)를 말한다. 이 문서들은 ADR과 03-architecture로 내용을 옮긴 뒤 저장소에서 지우며, 링크는 해당 커밋을 가리키므로 지운 뒤에도 열린다.
+- **리빌드 초기 설계안**: ADR을 쓰기 전에 작성한 설계 문서다. 커밋 [`4412bfd`](https://github.com/ehlung/woorizip-rebuild/tree/4412bfd35da846135a3f0fabaa8abd959e2bcc32/docs)의 [`docs/architecture.md`](https://github.com/ehlung/woorizip-rebuild/blob/4412bfd35da846135a3f0fabaa8abd959e2bcc32/docs/architecture.md)와 [`docs/rebuild-plan.md`](https://github.com/ehlung/woorizip-rebuild/blob/4412bfd35da846135a3f0fabaa8abd959e2bcc32/docs/rebuild-plan.md)를 말한다. 이 문서들은 ADR과 03-architecture로 내용을 옮긴 뒤 저장소에서 지웠다. 링크는 해당 커밋을 가리키므로 계속 열린다.
 
 ## 목록
 
