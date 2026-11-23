@@ -76,10 +76,10 @@ flowchart LR
 
 | 도메인 | 의미 | 단계 |
 | --- | --- | --- |
-| User | 서비스 계정 | 0 |
+| User | 서비스 계정. 가입 때 받은 이름, 화면 크기 | 0 |
 | UserIdentity | 로그인 수단. 0단계는 이메일(비밀번호 해시), 1단계에 카카오, 구글, 애플 | 0 |
 | Family | 가족 공간, 초대 코드 | 0 |
-| Member | 사용자의 가족 소속. 역할(방장, 구성원), 표시 이름, 상태(활성, 떠남) | 0 |
+| Member | 사용자의 가족 소속. 역할(방장, 구성원), 가족 안에서 보이는 이름과 호칭, 상태(활성, 떠남) | 0 |
 | Question | 질문 은행 | 0 |
 | FamilyQuestion | 가족별 주차 질문 배정 | 0 |
 | UploadSession | 영상 업로드 한 건. 업로드 주소, 만료 시각, 완료 여부 | 0 |
@@ -95,7 +95,7 @@ refresh token과 비밀번호 재설정 코드는 도메인이 아닌 인증 구
 
 나눈 이유:
 
-- **User와 Member**: 인증은 User, 가족 리소스 권한은 Member로 판단한다([0008](adr/0008-family-authorization.md)). 답변, 반응, 댓글, 푸시 수신자는 User가 아니라 Member를 가리킨다. 이름과 사진도 Member에 두어, 3단계에 여러 가족에 속하면 가족마다 다르게 보일 수 있다.
+- **User와 Member**: 인증은 User, 가족 리소스 권한은 Member로 판단한다([0008](adr/0008-family-authorization.md)). 답변, 반응, 댓글, 푸시 수신자는 User가 아니라 Member를 가리킨다. 가족 안에서 보이는 이름과 사진도 Member에 두어, 3단계에 여러 가족에 속하면 가족마다 다르게 보일 수 있다. 가입할 때는 가족에 들어가기 전에 이름을 받으므로, 그 이름은 User에 두고 가족에 들어갈 때 구성원 이름의 처음 값으로 쓴다.
 - **User와 UserIdentity**: 한 계정이 여러 로그인 수단을 가진다. 1단계에 소셜 로그인을 넣을 때 표를 바꾸지 않는다.
 - **Question과 FamilyQuestion**: 가족마다 시작 시점이 달라 같은 "1주차"라도 배정이 다르다. 2단계의 질문 추천도 이 구조 위에서 동작한다.
 - **UploadSession과 Answer**: 업로드 중인 상태는 세션이 갖는다. 답변은 업로드가 끝나 서버가 파일을 확인한 뒤에야 생기므로, 답변에 "업로드 중" 상태가 없다([0003](adr/0003-video-upload.md)).
@@ -158,14 +158,14 @@ AI 워커만 부르는 API다. 공개 API와 경로를 나누고, 인증 방식�
 
 ```sql
 -- 꺼낼 작업 하나를 잠근다. 다른 워커가 잠근 행은 건너뛴다.
-SELECT id FROM analysis_job
+SELECT id FROM analysis_jobs
 WHERE status = 'PENDING' AND run_after <= now()
 ORDER BY run_after
 LIMIT 1
 FOR UPDATE SKIP LOCKED;
 
 -- 같은 트랜잭션에서 넘긴다고 표시한다.
-UPDATE analysis_job
+UPDATE analysis_jobs
 SET status = 'RUNNING', attempt = attempt + 1, lease_until = now() + :lease
 WHERE id = :id;
 ```
