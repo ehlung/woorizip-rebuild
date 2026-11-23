@@ -1,10 +1,10 @@
 # 현황
 
-기준일: 2026-11-20
+기준일: 2026-11-24
 
 ## 지금 하는 일
 
-기존 프로젝트를 분석하고, 문제 정의와 결정 기록을 정리하고 있다. 구현은 문서 정리가 끝난 뒤 0단계부터 시작한다.
+0단계 구현을 시작했다. 지금은 API 서버의 개발 기반(프로젝트, 테스트, CI)을 만들고 있다. 코드는 브랜치에서 작업하고 PR로 병합한다.
 
 ## 로드맵
 
@@ -36,7 +36,7 @@
 | --- | --- |
 | 모노레포 | npm workspace 구성 |
 | `apps/mobile` | Expo 앱 초기화, 라우팅 설정. 화면은 빈 홈 하나 |
-| `apps/api` | 비어 있음 |
+| `apps/api` | Spring Boot 4.1.3, Java 25, Gradle(Kotlin DSL). 서버 실행과 Testcontainers 테스트까지. 기능은 없음 |
 | `apps/ai` | 비어 있음 |
 | `packages/design-tokens`, `api-client`, `core` | 패키지 뼈대만 있음 |
 | 로컬 인프라 | Docker Compose로 PostgreSQL(pgvector) 구성. S3는 개발용 버킷을 쓰며 아직 만들지 않음 (ADR 0016) |

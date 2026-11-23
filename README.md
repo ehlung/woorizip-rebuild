@@ -97,12 +97,16 @@ flowchart LR
 
 ## 진행 상황
 
-설계 문서를 마치고 첫 버전(MVP) 구현을 준비하고 있습니다. 2026년 안에 첫 테스트 배포를 하고, 실사용자의 피드백을 반영해 정식 출시까지 진행합니다.
+설계 문서를 마치고 첫 버전(MVP)을 구현하고 있습니다. 2026년 안에 첫 테스트 배포를 하고, 실사용자의 피드백을 반영해 정식 출시까지 진행합니다.
 
 ```bash
 npm install                                 # 의존성 설치
 cd infra && docker compose up -d && cd ..   # 로컬 PostgreSQL
 npm run mobile:start                        # 모바일 앱
+
+# API 서버 (JDK 25 필요)
+apps/api/gradlew -p apps/api bootRun --args='--spring.profiles.active=local'
+apps/api/gradlew -p apps/api test           # 테스트 (Docker 필요)
 ```
 
 <br>
