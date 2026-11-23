@@ -1,0 +1,10 @@
+#!/bin/sh
+# 커밋하기 전에 스테이징된 변경에서 비밀값을 찾는다 (docs/adr/0014-secrets-and-config.md).
+# 설치: git config core.hooksPath .githooks
+
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "gitleaks가 설치되어 있지 않아 커밋을 멈췄습니다. 설치 방법은 README의 '개발 환경 준비'를 참고하세요." >&2
+  exit 1
+fi
+
+exec gitleaks git --pre-commit --redact --staged --verbose
