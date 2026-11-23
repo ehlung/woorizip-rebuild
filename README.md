@@ -104,3 +104,16 @@ npm install                                 # 의존성 설치
 cd infra && docker compose up -d && cd ..   # 로컬 PostgreSQL
 npm run mobile:start                        # 모바일 앱
 ```
+
+<br>
+
+## 개발 환경 준비
+
+커밋에 비밀값이 들어가지 않도록, 커밋할 때마다 gitleaks로 검사합니다. 저장소를 처음 받으면 gitleaks를 설치하고 저장소의 git hook을 연결합니다.
+
+```bash
+brew install gitleaks                       # macOS. 다른 OS는 https://github.com/gitleaks/gitleaks 참고
+git config core.hooksPath .githooks         # 커밋 전 검사 연결
+```
+
+GitHub에서도 모든 PR과 `main`에 대해 같은 검사를 실행합니다.
