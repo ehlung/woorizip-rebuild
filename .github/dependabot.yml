@@ -1,0 +1,13 @@
+# 새 버전이 나오면 PR로 알려 준다. 올릴지는 테스트 결과와 릴리스 노트를 보고 정한다.
+# https://docs.github.com/en/code-security/dependabot/working-with-dependabot/dependabot-options-reference
+version: 2
+updates:
+  - package-ecosystem: gradle
+    directory: /apps/api
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
