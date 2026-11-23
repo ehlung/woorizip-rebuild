@@ -110,7 +110,7 @@
 
 ## 기다리는 것
 
-- 기존 저장소에 커밋된 AWS 키와 배포 자원 정리: 백엔드 담당자 회신 대기. 회신을 받으면 [01-legacy-analysis.md](01-legacy-analysis.md) 4장 상태를 갱신한다.
+없다. 기존 저장소에 커밋된 비밀값은 2026-11-23에 정리를 마쳤고, 남은 위험은 [01-legacy-analysis.md](01-legacy-analysis.md) 4장에 기록했다.
 
 ## 발행한 글
 

@@ -601,13 +601,13 @@ const recorder = new MediaRecorder(streamRef.current, {
 
 세 저장소는 모두 공개 상태다. 값과 위치는 적지 않고 종류와 조치 상태만 기록한다.
 
-| 비밀값 | 위치 | 상태 (2026-11-19) |
+| 비밀값 | 위치 | 상태 (괄호 안은 확인일) |
 | --- | --- | --- |
-| AWS 액세스 키 | AI 저장소의 추적 중인 설정 파일 | BE 로컬 설정의 S3 키와 같은 키로, BE 담당자 계정의 키임을 확인. 폐기 회신 대기 |
-| JWT 서명 키 | BE 소스 코드 | P-12 참고 |
-| 운영 DB 비밀번호 | BE git 이력 | 운영 DB 주소가 조회되지 않음. 인스턴스 삭제로 추정 |
-| 메일 계정 비밀번호 | BE git 이력 | 확인 중 |
-| GCP 서비스계정 키 | BE CI가 Docker 이미지에 포함 | 이미지 저장소 공개 여부 확인 중 |
+| AWS 액세스 키 | AI 저장소의 추적 중인 설정 파일 | BE 로컬 설정의 S3 키와 같은 키로, BE 담당자 계정의 키다. BE 담당자가 AWS 계정을 삭제했다고 회신했다. 닫힌 계정의 서비스에는 접근할 수 없고, 90일 뒤 계정이 영구 종료되며 남은 데이터가 삭제된다([AWS 계정 해지 문서](https://docs.aws.amazon.com/accounts/latest/reference/manage-acct-closing.html)). 해결 (2026-11-23) |
+| JWT 서명 키 | BE 소스 코드 | P-12 참고 (2026-11-19) |
+| 운영 DB 비밀번호 | BE git 이력 | 운영 DB 주소는 AWS RDS였다. BE 담당자가 AWS 계정 삭제로 데이터가 남아 있지 않다고 회신했다. RDS가 삭제된 계정에 있었는지는 직접 확인하지 못했다 (2026-11-23) |
+| 메일 계정 비밀번호 | BE git 이력 (커밋한 날 추적을 해제했지만 이력에 남음) | BE 담당자가 Google 계정 비밀번호를 바꿨고, 앱 비밀번호 목록이 비어 있음을 확인했다. 계정 비밀번호를 바꾸면 앱 비밀번호가 폐기된다([Google 계정 고객센터](https://support.google.com/accounts/answer/185833)). 해결 (2026-11-23) |
+| GCP 서비스계정 키 | BE CI가 Docker 이미지에 포함 (AI 서버가 Cloud Vision에 쓰던 키와 같은 키) | 2025-12-04부터 배포 CI가 키 파일을 jar에 넣어 빌드했고, 그 이미지가 공개 Docker Hub 저장소에 올라갔다. BE 담당자가 저장소를 비공개로 바꿨다. 서비스 계정 키는 기본적으로 만료되지 않으므로("By default, when you create a user-managed service account key, the key never expires.", [Google Cloud 문서](https://docs.cloud.google.com/iam/docs/service-account-creds)) 공개 기간에 이미지를 받아 간 사람이 있다면 키는 아직 유효할 수 있다. 키가 속한 GCP 프로젝트의 주인과 연락이 닿지 않아 키를 삭제하지 못했다. 남은 위험이지만, 이 키로 쓸 수 있는 API(TTS, Cloud Vision)는 유료라 프로젝트 결제가 끊겼다면 호출할 수 없고, 결제가 연결돼 있었다면 사용 요금으로 드러났을 것이므로 실제 위협은 크지 않을 것으로 예상한다. 프로젝트의 결제 상태는 확인하지 못했다 (2026-11-23) |
 | 카카오 JS 키, 서버 주소 | FE git 이력 | 브라우저에 노출되는 키. 허용 도메인 확인 필요 |
 
 - 비밀값을 넣었다가 추적을 해제하는 커밋이 BE(`808cd1c`, `1fb5469`)와 FE(`1f3f2b9`)에 반복된다. 추적을 해제해도 이전 커밋에는 값이 남는다.
@@ -669,8 +669,7 @@ const recorder = new MediaRecorder(streamRef.current, {
 
 ## 부록 B. 확인하지 못한 것
 
-- 커밋된 비밀값이 아직 유효한지
-- BE Docker 이미지 저장소의 공개 여부
+- GCP 서비스계정 키가 삭제됐는지 (4장 비밀값 표)
 - 실제 EC2에서 실행된 AI 코드의 버전
 - 실제 응답 시간과 오류율 (운영 데이터 없음)
 - iPhone Safari에서의 녹화 실패 여부 (실기기 확인 안 함)
