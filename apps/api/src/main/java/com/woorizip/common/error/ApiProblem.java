@@ -49,7 +49,7 @@ public class ApiProblem extends ProblemDetail {
 		return new ApiProblem(source, code, null);
 	}
 
-	static ApiProblem validationFailed(List<FieldError> errors) {
+	public static ApiProblem validationFailed(List<FieldError> errors) {
 		ErrorCode code = ErrorCode.VALIDATION_FAILED;
 		return new ApiProblem(ProblemDetail.forStatusAndDetail(code.status(), code.message()), code, errors);
 	}

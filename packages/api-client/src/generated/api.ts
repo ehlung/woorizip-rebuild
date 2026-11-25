@@ -4,4 +4,184 @@
  * 우리.zip API
  * OpenAPI spec version: v0
  */
+import { apiFetch } from '../http';
+export interface EmailCodeRequest {
+  /**
+     * @minLength 0
+     * @maxLength 320
+     */
+  email: string;
+}
 
+export type SignupRequestConsentsItem = typeof SignupRequestConsentsItem[keyof typeof SignupRequestConsentsItem];
+
+
+export const SignupRequestConsentsItem = {
+  TERMS_OF_SERVICE: 'TERMS_OF_SERVICE',
+  PRIVACY_POLICY: 'PRIVACY_POLICY',
+  AI_DATA_TRANSFER: 'AI_DATA_TRANSFER',
+  AGE_14_OR_OLDER: 'AGE_14_OR_OLDER',
+} as const;
+
+export type SignupRequestScreenSize = typeof SignupRequestScreenSize[keyof typeof SignupRequestScreenSize];
+
+
+export const SignupRequestScreenSize = {
+  SMALL: 'SMALL',
+  MEDIUM: 'MEDIUM',
+  LARGE: 'LARGE',
+} as const;
+
+export interface SignupRequest {
+  consents: SignupRequestConsentsItem[];
+  /**
+     * @minLength 0
+     * @maxLength 20
+     */
+  name: string;
+  password: string;
+  screenSize: SignupRequestScreenSize;
+  /** @minLength 1 */
+  signupToken: string;
+}
+
+export interface SignupResponse {
+  accessToken?: string;
+  accessTokenExpiresAt?: string;
+  userId?: number;
+}
+
+export interface VerifyEmailCodeRequest {
+  /**
+     * @minLength 1
+     * @pattern \d{6}
+     */
+  code: string;
+  /**
+     * @minLength 0
+     * @maxLength 320
+     */
+  email: string;
+}
+
+export interface VerifyEmailCodeResponse {
+  expiresAt?: string;
+  signupToken?: string;
+}
+
+const getHeaders = (...sources: (RequestInit['headers'] | Record<string, string | number | boolean | bigint | readonly string[] | undefined>)[]) => {
+  const seen = new Set<string>();
+  const layers: [string, string | readonly string[]][][] = [];
+  for (const source of sources.reverse()) {
+    if (!source) continue;
+    const entries = source instanceof Headers
+      ? source.entries()
+      : Symbol.iterator in source
+        ? Array.from(source as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string])
+        : Object.entries<string | number | boolean | bigint | readonly string[] | undefined>(source);
+    const layer: [string, string | readonly string[]][] = [];
+    for (const [name, value] of entries) {
+      if (value !== undefined && !seen.has(name.toLowerCase())) layer.push([name, typeof value === 'object' ? value : String(value)]);
+    }
+    for (const [name] of layer) seen.add(name.toLowerCase());
+    layers.push(layer);
+  }
+  return Object.fromEntries(layers.reverse().flat()) as Extract<RequestInit['headers'], Record<string, unknown>>;
+};
+
+export type signupResponse201 = {
+  data: SignupResponse
+  status: 201
+}
+
+export type signupResponseSuccess = (signupResponse201) & {
+  headers: Headers;
+};
+;
+
+export type signupResponse = (signupResponseSuccess)
+
+export const getSignupUrl = () => {
+
+
+
+
+  return `/auth/signup`
+}
+
+export const signup = async (signupRequest: SignupRequest, options?: Parameters<typeof apiFetch>[1]): Promise<signupResponse> => {
+
+  return apiFetch<signupResponse>(getSignupUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: getHeaders({ 'Content-Type': 'application/json' }, options?.headers),
+    body: JSON.stringify(signupRequest)
+  }
+);}
+
+
+
+export type requestCodeResponse202 = {
+  data: void
+  status: 202
+}
+
+export type requestCodeResponseSuccess = (requestCodeResponse202) & {
+  headers: Headers;
+};
+;
+
+export type requestCodeResponse = (requestCodeResponseSuccess)
+
+export const getRequestCodeUrl = () => {
+
+
+
+
+  return `/auth/signup/email-code`
+}
+
+export const requestCode = async (emailCodeRequest: EmailCodeRequest, options?: Parameters<typeof apiFetch>[1]): Promise<requestCodeResponse> => {
+
+  return apiFetch<requestCodeResponse>(getRequestCodeUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: getHeaders({ 'Content-Type': 'application/json' }, options?.headers),
+    body: JSON.stringify(emailCodeRequest)
+  }
+);}
+
+
+
+export type verifyCodeResponse200 = {
+  data: VerifyEmailCodeResponse
+  status: 200
+}
+
+export type verifyCodeResponseSuccess = (verifyCodeResponse200) & {
+  headers: Headers;
+};
+;
+
+export type verifyCodeResponse = (verifyCodeResponseSuccess)
+
+export const getVerifyCodeUrl = () => {
+
+
+
+
+  return `/auth/signup/email-code/verify`
+}
+
+export const verifyCode = async (verifyEmailCodeRequest: VerifyEmailCodeRequest, options?: Parameters<typeof apiFetch>[1]): Promise<verifyCodeResponse> => {
+
+  return apiFetch<verifyCodeResponse>(getVerifyCodeUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: getHeaders({ 'Content-Type': 'application/json' }, options?.headers),
+    body: JSON.stringify(verifyEmailCodeRequest)
+  }
+);}

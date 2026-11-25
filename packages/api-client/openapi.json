@@ -11,8 +11,178 @@
   "security" : [ {
     "bearer" : [ ]
   } ],
-  "paths" : { },
+  "paths" : {
+    "/auth/signup" : {
+      "post" : {
+        "operationId" : "signup",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SignupRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SignupResponse"
+                }
+              }
+            },
+            "description" : "Created"
+          }
+        },
+        "security" : [ ],
+        "tags" : [ "signup-controller" ]
+      }
+    },
+    "/auth/signup/email-code" : {
+      "post" : {
+        "operationId" : "requestCode",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/EmailCodeRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "202" : {
+            "description" : "Accepted"
+          }
+        },
+        "security" : [ ],
+        "tags" : [ "signup-controller" ]
+      }
+    },
+    "/auth/signup/email-code/verify" : {
+      "post" : {
+        "operationId" : "verifyCode",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/VerifyEmailCodeRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/VerifyEmailCodeResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "security" : [ ],
+        "tags" : [ "signup-controller" ]
+      }
+    }
+  },
   "components" : {
+    "schemas" : {
+      "EmailCodeRequest" : {
+        "type" : "object",
+        "properties" : {
+          "email" : {
+            "type" : "string",
+            "format" : "email",
+            "maxLength" : 320,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "email" ]
+      },
+      "SignupRequest" : {
+        "type" : "object",
+        "properties" : {
+          "consents" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "TERMS_OF_SERVICE", "PRIVACY_POLICY", "AI_DATA_TRANSFER", "AGE_14_OR_OLDER" ]
+            },
+            "uniqueItems" : true
+          },
+          "name" : {
+            "type" : "string",
+            "maxLength" : 20,
+            "minLength" : 0
+          },
+          "password" : {
+            "type" : "string"
+          },
+          "screenSize" : {
+            "type" : "string",
+            "enum" : [ "SMALL", "MEDIUM", "LARGE" ]
+          },
+          "signupToken" : {
+            "type" : "string",
+            "minLength" : 1
+          }
+        },
+        "required" : [ "consents", "name", "password", "screenSize", "signupToken" ]
+      },
+      "SignupResponse" : {
+        "type" : "object",
+        "properties" : {
+          "accessToken" : {
+            "type" : "string"
+          },
+          "accessTokenExpiresAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "userId" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "VerifyEmailCodeRequest" : {
+        "type" : "object",
+        "properties" : {
+          "code" : {
+            "type" : "string",
+            "minLength" : 1,
+            "pattern" : "\\d{6}"
+          },
+          "email" : {
+            "type" : "string",
+            "format" : "email",
+            "maxLength" : 320,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "code", "email" ]
+      },
+      "VerifyEmailCodeResponse" : {
+        "type" : "object",
+        "properties" : {
+          "expiresAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "signupToken" : {
+            "type" : "string"
+          }
+        }
+      }
+    },
     "securitySchemes" : {
       "bearer" : {
         "bearerFormat" : "JWT",

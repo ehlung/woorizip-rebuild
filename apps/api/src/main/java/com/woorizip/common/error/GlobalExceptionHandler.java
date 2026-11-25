@@ -31,6 +31,9 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
 	@ExceptionHandler(ApiException.class)
 	ResponseEntity<ApiProblem> handleApiException(ApiException ex) {
+		if (!ex.errors().isEmpty()) {
+			return respond(ApiProblem.validationFailed(ex.errors()));
+		}
 		return respond(ApiProblem.of(ex.code(), ex.getMessage()));
 	}
 

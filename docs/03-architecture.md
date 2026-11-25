@@ -418,7 +418,7 @@ com.woorizip
   notification/  푸시 발송, 기기 토큰 (1단계: 알림 목록, 알림 설정)
   search/        의미 검색 (2단계)
   common/        공통 오류 응답, 가족 권한 확인
-  infra/         S3, Expo 푸시 클라이언트, 스케줄러, 삭제 작업
+  infra/         S3, Expo 푸시 클라이언트, 메일 발송, 스케줄러, 삭제 작업
 ```
 
 - 각 도메인 패키지는 `api`(컨트롤러, DTO), `application`(서비스), `domain`(엔티티, 리포지토리)으로 나눈다.

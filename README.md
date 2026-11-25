@@ -113,6 +113,8 @@ apps/api/gradlew -p apps/api test           # 테스트 (Docker 필요). API 명
 npm run generate --workspace @woorizip/api-client
 ```
 
+로컬(`local` 프로필)은 메일을 실제로 보내지 않습니다. 가입 인증 코드는 API 서버 로그의 "가짜 메일 발송"에서 확인합니다.
+
 서버 API를 바꾸면 API 서버 테스트와 클라이언트 생성을 다시 실행하고, 바뀐 명세(`packages/api-client/openapi.json`)와 생성된 코드를 함께 커밋합니다. 커밋된 명세나 클라이언트가 서버와 다르면 CI가 실패합니다.
 
 <br>
