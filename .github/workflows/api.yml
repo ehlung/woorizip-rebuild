@@ -30,7 +30,7 @@ jobs:
         run: |
           if [ "$EVENT_NAME" = "workflow_dispatch" ] || [ -z "$BASE_SHA" ] || ! git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
             echo "api=true" >> "$GITHUB_OUTPUT"
-          elif git diff --name-only "$BASE_SHA" HEAD | grep -qE '^(apps/api/|\.github/workflows/api\.yml$)'; then
+          elif git diff --name-only "$BASE_SHA" HEAD | grep -qE '^(apps/api/|packages/api-client/|package-lock\.json$|\.nvmrc$|\.github/workflows/api\.yml$)'; then
             echo "api=true" >> "$GITHUB_OUTPUT"
           else
             echo "api=false" >> "$GITHUB_OUTPUT"
@@ -54,3 +54,21 @@ jobs:
       - uses: gradle/actions/setup-gradle@v6
       - name: 테스트
         run: ./gradlew test
+      # 테스트(OpenApiSpecTest)가 packages/api-client/openapi.json을 새로 쓴다.
+      # 그 명세로 앱용 클라이언트를 다시 생성해, 커밋된 것과 다르면 실패한다 (ADR 0006).
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: API 명세와 앱용 클라이언트가 커밋된 것과 같은지 확인
+        working-directory: .
+        run: |
+          npm ci
+          npm run generate --workspace @woorizip/api-client
+          npm run typecheck --workspace @woorizip/api-client
+          if [ -n "$(git status --porcelain -- packages/api-client)" ]; then
+            git status --porcelain -- packages/api-client
+            echo "서버 API가 바뀌었는데 클라이언트를 다시 생성하지 않았습니다."
+            echo "apps/api에서 ./gradlew test, 저장소 루트에서 npm run generate --workspace @woorizip/api-client를 실행하고 결과를 커밋하세요."
+            exit 1
+          fi

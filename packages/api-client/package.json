@@ -2,7 +2,15 @@
   "name": "@woorizip/api-client",
   "version": "0.0.0",
   "private": true,
-  "description": "OpenAPI 스펙 기반 API 클라이언트",
+  "description": "서버 OpenAPI 명세로 생성한 API 클라이언트",
   "main": "src/index.ts",
-  "types": "src/index.ts"
+  "types": "src/index.ts",
+  "scripts": {
+    "generate": "orval --config orval.config.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "orval": "^8.49.0",
+    "typescript": "~6.0.3"
+  }
 }

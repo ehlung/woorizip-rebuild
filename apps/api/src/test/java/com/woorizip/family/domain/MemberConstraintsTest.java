@@ -15,11 +15,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.transaction.annotation.Transactional;
 
 /** 가족 소속 규칙을 DB 제약이 지키는지 확인한다 (ADR 0010의 검증 항목). */
 @SpringBootTest
+@ActiveProfiles("test")
 @Import(TestcontainersConfiguration.class)
 @Transactional
 class MemberConstraintsTest {
