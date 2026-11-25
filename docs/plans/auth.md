@@ -40,6 +40,7 @@ A-43(탈퇴한 사용자 차단)은 회원 탈퇴를, A-45(앱의 동시 401 처
 | 2026-11-25 | 메일은 가짜 발송까지만. 실제 SES 발송은 도메인을 정한 뒤(ADR 0017) | SES 도메인 인증에는 소유한 도메인의 DNS 설정이 필요하다 |
 | 2026-11-25 | 오류 응답은 RFC 9457 ProblemDetail에 `code`를 더한 형식 | Spring이 기본으로 지원하고, Spring이 직접 만드는 오류(404, 405 등)도 같은 형식으로 나온다 |
 | 2026-11-25 | 로컬과 테스트의 서명 키는 켤 때마다 무작위로 만든다(`${random.value}` 두 개를 이어 붙임) | 설정 항목은 운영과 같고 값만 다르다(ADR 0014). `${random.value}` 하나는 128비트라 둘을 잇는다 |
+| 2026-11-26 | npm은 Dependabot 새 버전 PR을 끄고(`open-pull-requests-limit: 0`) 보안 업데이트만 받는다. 저장소의 Dependabot 보안 알림과 자동 보안 업데이트를 켰다 | 앱(Expo) 패키지는 SDK가 기대하는 버전에 맞춰야 해서, SDK와 상관없는 최신 버전 PR은 오히려 어긋난다 |
 
 ## 계획과 달라진 것
 
@@ -53,5 +54,8 @@ A-43(탈퇴한 사용자 차단)은 회원 탈퇴를, A-45(앱의 동시 401 처
 
 ## 남은 일
 
-- npm 의존성 취약점 정리와 Dependabot에 npm 추가(PR 2 전에 별도 PR)
-- expo-router 관련 취약점 3건은 Expo SDK를 올릴 때 함께 처리
+- npm 의존성 취약점 정리: `npm audit fix`로 24건에서 7건으로 줄였다(2026-11-26). 남은 7건은 큰 버전 변경이 필요하다
+  - expo-router 58로 올려야 하는 3건(expo-router, query-string, decode-uri-component)은 Expo SDK를 올릴 때 함께 처리
+  - expo를 52로 내리라고 나오는 3건(expo, @expo/fingerprint, minimatch)은 SDK 57에서 내려가는 쪽이라 받지 않는다
+  - image-size 1건은 audit fix로 고쳐지지 않았다
+- 앱 패키지 5개가 Expo SDK 57이 기대하는 버전과 다르다(`npx expo install --check`, main에 원래 있던 상태). 가장 큰 차이는 react-native-gesture-handler(기대 ~2.32, 실제 3.1.0). 앱 화면 작업을 시작할 때 `npx expo install --fix`로 맞춘다

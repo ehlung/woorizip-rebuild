@@ -11,3 +11,11 @@ updates:
     directory: /
     schedule:
       interval: weekly
+
+  # 앱(Expo) 패키지는 Expo SDK가 기대하는 버전에 맞춰야 해서(npx expo install --check),
+  # 새 버전 PR은 받지 않는다. 취약점 보안 업데이트 PR은 이 값과 상관없이 따로 온다.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 0
