@@ -1,10 +1,10 @@
 # 현황
 
-기준일: 2026-11-25
+기준일: 2026-11-26
 
 ## 지금 하는 일
 
-0단계 구현 중이다. 지금은 가입·로그인을 PR 4개로 나눠 만들고 있고, 첫 PR에서 공통 오류 응답, 인증 규칙, JWT 발급·검증, API 명세와 앱용 클라이언트 생성을 만들었다. 코드는 브랜치에서 작업하고 PR로 병합한다.
+0단계 구현 중이다. 지금은 가입·로그인을 PR 4개로 나눠 만들고 있고, 첫 PR(인증 기반)을 병합했다. 작업 순서, 정한 것, 계획과 달라진 것은 [plans/auth.md](plans/auth.md)에 적는다. 코드는 브랜치에서 작업하고 PR로 병합한다.
 
 ## 로드맵
 
@@ -26,7 +26,8 @@
 | [02-domain-and-problem.md](02-domain-and-problem.md) | 초안 완료 |
 | [ADR](adr/) | 18개 중 14개 채택(0001~0004, 0006~0011, 0014~0016, 0018), 2개 제안(0005, 0012) |
 | [03-architecture.md](03-architecture.md) | 초안 완료. 미정 항목은 12장 |
-| [04-evaluation.md](04-evaluation.md) | 초안 완료 (assertion 88개, rubric 초안, 운영 지표 기준값 초안) |
+| [04-evaluation.md](04-evaluation.md) | 초안 완료 (assertion 88개 중 8개 통과, rubric 초안, 운영 지표 기준값 초안) |
+| [plans/](plans/) | 작업 단위별 계획과 진행. 지금은 [가입·로그인](plans/auth.md) |
 | [README.md](../README.md) | 새 구조에 맞게 다시 씀 |
 | [user-flows.md](user-flows.md) | 단계 표시와 지금까지의 결정 반영 |
 
