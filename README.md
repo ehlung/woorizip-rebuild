@@ -92,6 +92,7 @@ flowchart LR
 | [평가 기준](docs/04-evaluation.md) | 결정이 맞았는지 확인하는 기준 |
 | [사용자 흐름](docs/user-flows.md) | 앱의 흐름과 화면 |
 | [현황](docs/STATUS.md) | 진행 상태와 로드맵 |
+| [작업 계획](docs/plans/) | 작업 단위별 순서, 정한 것, 계획과 달라진 것 |
 
 <br>
 
