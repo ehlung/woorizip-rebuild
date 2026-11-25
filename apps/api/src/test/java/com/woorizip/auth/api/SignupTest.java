@@ -8,6 +8,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -15,8 +21,10 @@ import com.jayway.jsonpath.JsonPath;
 import com.woorizip.MutableClock;
 import com.woorizip.TestClockConfiguration;
 import com.woorizip.TestcontainersConfiguration;
+import com.woorizip.auth.application.SignupService;
 import com.woorizip.auth.domain.IdentityProvider;
 import com.woorizip.auth.domain.UserIdentityRepository;
+import com.woorizip.common.error.ApiException;
 import com.woorizip.infra.mail.FakeMailGateway;
 import com.woorizip.infra.mail.Mail;
 import com.woorizip.user.domain.ConsentKind;
@@ -65,6 +73,9 @@ class SignupTest {
 
 	@Autowired
 	JwtDecoder jwtDecoder;
+
+	@Autowired
+	SignupService signupService;
 
 	@Test
 	void 코드를_받아_확인하고_가입하면_로그인_상태가_된다() throws Exception {
@@ -176,6 +187,31 @@ class SignupTest {
 
 		this.clock.advance(Duration.ofMinutes(1));
 		requestCode(email).andExpect(status().isAccepted());
+	}
+
+	@Test
+	void 같은_이메일로_동시에_요청해도_한_번만_통과한다() throws Exception {
+		String email = newEmail();
+		CountDownLatch start = new CountDownLatch(1);
+		Callable<String> request = () -> {
+			start.await();
+			try {
+				this.signupService.requestCode(email);
+				return "ACCEPTED";
+			}
+			catch (ApiException ex) {
+				return ex.code().name();
+			}
+		};
+		try (ExecutorService pool = Executors.newFixedThreadPool(2)) {
+			Future<String> first = pool.submit(request);
+			Future<String> second = pool.submit(request);
+			start.countDown();
+
+			assertThat(List.of(first.get(10, TimeUnit.SECONDS), second.get(10, TimeUnit.SECONDS)))
+				.containsExactlyInAnyOrder("ACCEPTED", "TOO_MANY_REQUESTS");
+		}
+		assertThat(this.mails.sentTo(email)).hasSize(1);
 	}
 
 	@Test

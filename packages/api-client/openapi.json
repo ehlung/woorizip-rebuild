@@ -35,6 +35,16 @@
               }
             },
             "description" : "Created"
+          },
+          "default" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiProblem"
+                }
+              }
+            },
+            "description" : "오류. 앱은 code로 처리 방식을 정한다"
           }
         },
         "security" : [ ],
@@ -57,6 +67,16 @@
         "responses" : {
           "202" : {
             "description" : "Accepted"
+          },
+          "default" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiProblem"
+                }
+              }
+            },
+            "description" : "오류. 앱은 code로 처리 방식을 정한다"
           }
         },
         "security" : [ ],
@@ -86,6 +106,16 @@
               }
             },
             "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiProblem"
+                }
+              }
+            },
+            "description" : "오류. 앱은 code로 처리 방식을 정한다"
           }
         },
         "security" : [ ],
@@ -95,6 +125,50 @@
   },
   "components" : {
     "schemas" : {
+      "ApiFieldError" : {
+        "type" : "object",
+        "properties" : {
+          "field" : {
+            "type" : "string"
+          },
+          "message" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "field", "message" ]
+      },
+      "ApiProblem" : {
+        "type" : "object",
+        "properties" : {
+          "code" : {
+            "type" : "string",
+            "enum" : [ "BAD_REQUEST", "VALIDATION_FAILED", "UNAUTHORIZED", "FORBIDDEN", "NOT_FOUND", "METHOD_NOT_ALLOWED", "UNSUPPORTED_MEDIA_TYPE", "TOO_MANY_REQUESTS", "EMAIL_CODE_INVALID", "EMAIL_CODE_EXPIRED", "SIGNUP_TOKEN_INVALID", "EMAIL_ALREADY_REGISTERED", "INTERNAL_ERROR" ]
+          },
+          "detail" : {
+            "type" : "string"
+          },
+          "errors" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ApiFieldError"
+            }
+          },
+          "instance" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "code", "status" ]
+      },
       "EmailCodeRequest" : {
         "type" : "object",
         "properties" : {

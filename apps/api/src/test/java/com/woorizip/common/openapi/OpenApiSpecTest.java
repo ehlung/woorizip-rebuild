@@ -44,6 +44,8 @@ class OpenApiSpecTest {
 			.getContentAsString(StandardCharsets.UTF_8);
 
 		assertThat(spec).contains("\"openapi\"").contains("\"bearer\"");
+		// 오류 응답 형식과 오류 코드 목록이 명세에 들어가야 앱이 code를 타입으로 쓸 수 있다.
+		assertThat(spec).contains("\"ApiProblem\"").contains("\"EMAIL_CODE_EXPIRED\"").contains("\"default\"");
 		Files.writeString(SPEC_FILE, spec.endsWith("\n") ? spec : spec + "\n", StandardCharsets.UTF_8);
 	}
 

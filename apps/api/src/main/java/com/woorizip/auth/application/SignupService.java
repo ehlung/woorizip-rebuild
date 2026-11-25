@@ -20,6 +20,7 @@ import com.woorizip.auth.domain.UserIdentityRepository;
 import com.woorizip.common.error.ApiException;
 import com.woorizip.common.error.ApiProblem;
 import com.woorizip.common.error.ErrorCode;
+import com.woorizip.infra.db.AdvisoryLocks;
 import com.woorizip.infra.mail.Mail;
 import com.woorizip.infra.mail.MailKind;
 import com.woorizip.infra.mail.MailOutbox;
@@ -80,11 +81,13 @@ public class SignupService {
 
 	private final AccessTokenIssuer accessTokens;
 
+	private final AdvisoryLocks locks;
+
 	private final Clock clock;
 
 	SignupService(EmailCodeRepository codes, SignupTicketRepository tickets, UserRepository users,
 			UserIdentityRepository identities, UserConsentRepository consents, MailOutbox mails,
-			PasswordEncoder passwordEncoder, AccessTokenIssuer accessTokens, Clock clock) {
+			PasswordEncoder passwordEncoder, AccessTokenIssuer accessTokens, AdvisoryLocks locks, Clock clock) {
 		this.codes = codes;
 		this.tickets = tickets;
 		this.users = users;
@@ -93,16 +96,18 @@ public class SignupService {
 		this.mails = mails;
 		this.passwordEncoder = passwordEncoder;
 		this.accessTokens = accessTokens;
+		this.locks = locks;
 		this.clock = clock;
 	}
 
 	/**
 	 * 가입 코드를 요청한다. 가입 여부와 관계없이 같은 요청 횟수 제한을 걸어, 응답이나 제한으로 가입 여부를 알 수 없게
-	 * 한다(A-85).
+	 * 한다(A-85). 같은 이메일로 동시에 요청해도 횟수 제한을 함께 통과하지 않도록, 이메일마다 잠그고 센다.
 	 */
 	@Transactional
 	public void requestCode(String rawEmail) {
 		String email = Emails.normalize(rawEmail);
+		this.locks.lockForTransaction("signup-email:" + email);
 		Instant now = this.clock.instant();
 		if (this.mails.countSince(email, SIGNUP_MAILS, now.minus(REQUEST_INTERVAL)) > 0
 				|| this.mails.countSince(email, SIGNUP_MAILS, now.minus(Duration.ofDays(1))) >= DAILY_REQUEST_LIMIT) {

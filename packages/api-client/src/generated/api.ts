@@ -5,6 +5,40 @@
  * OpenAPI spec version: v0
  */
 import { apiFetch } from '../http';
+export interface ApiFieldError {
+  field: string;
+  message: string;
+}
+
+export type ApiProblemCode = typeof ApiProblemCode[keyof typeof ApiProblemCode];
+
+
+export const ApiProblemCode = {
+  BAD_REQUEST: 'BAD_REQUEST',
+  VALIDATION_FAILED: 'VALIDATION_FAILED',
+  UNAUTHORIZED: 'UNAUTHORIZED',
+  FORBIDDEN: 'FORBIDDEN',
+  NOT_FOUND: 'NOT_FOUND',
+  METHOD_NOT_ALLOWED: 'METHOD_NOT_ALLOWED',
+  UNSUPPORTED_MEDIA_TYPE: 'UNSUPPORTED_MEDIA_TYPE',
+  TOO_MANY_REQUESTS: 'TOO_MANY_REQUESTS',
+  EMAIL_CODE_INVALID: 'EMAIL_CODE_INVALID',
+  EMAIL_CODE_EXPIRED: 'EMAIL_CODE_EXPIRED',
+  SIGNUP_TOKEN_INVALID: 'SIGNUP_TOKEN_INVALID',
+  EMAIL_ALREADY_REGISTERED: 'EMAIL_ALREADY_REGISTERED',
+  INTERNAL_ERROR: 'INTERNAL_ERROR',
+} as const;
+
+export interface ApiProblem {
+  code: ApiProblemCode;
+  detail?: string;
+  errors?: ApiFieldError[];
+  instance?: string;
+  status: number;
+  title?: string;
+  type?: string;
+}
+
 export interface EmailCodeRequest {
   /**
      * @minLength 0
@@ -69,6 +103,13 @@ export interface VerifyEmailCodeResponse {
   signupToken?: string;
 }
 
+export type HTTPStatusCode1xx = 100 | 101 | 102 | 103;
+export type HTTPStatusCode2xx = 200 | 201 | 202 | 203 | 204 | 205 | 206 | 207;
+export type HTTPStatusCode3xx = 300 | 301 | 302 | 303 | 304 | 305 | 307 | 308;
+export type HTTPStatusCode4xx = 400 | 401 | 402 | 403 | 404 | 405 | 406 | 407 | 408 | 409 | 410 | 411 | 412 | 413 | 414 | 415 | 416 | 417 | 418 | 419 | 420 | 421 | 422 | 423 | 424 | 426 | 428 | 429 | 431 | 451;
+export type HTTPStatusCode5xx = 500 | 501 | 502 | 503 | 504 | 505 | 507 | 511;
+export type HTTPStatusCodes = HTTPStatusCode1xx | HTTPStatusCode2xx | HTTPStatusCode3xx | HTTPStatusCode4xx | HTTPStatusCode5xx;
+
 const getHeaders = (...sources: (RequestInit['headers'] | Record<string, string | number | boolean | bigint | readonly string[] | undefined>)[]) => {
   const seen = new Set<string>();
   const layers: [string, string | readonly string[]][][] = [];
@@ -94,12 +135,19 @@ export type signupResponse201 = {
   status: 201
 }
 
+export type signupResponseDefault = {
+  data: ApiProblem
+  status: Exclude<HTTPStatusCodes, 201>
+}
+
 export type signupResponseSuccess = (signupResponse201) & {
   headers: Headers;
 };
-;
+export type signupResponseError = (signupResponseDefault) & {
+  headers: Headers;
+};
 
-export type signupResponse = (signupResponseSuccess)
+export type signupResponse = (signupResponseSuccess | signupResponseError)
 
 export const getSignupUrl = () => {
 
@@ -127,12 +175,19 @@ export type requestCodeResponse202 = {
   status: 202
 }
 
+export type requestCodeResponseDefault = {
+  data: ApiProblem
+  status: Exclude<HTTPStatusCodes, 202>
+}
+
 export type requestCodeResponseSuccess = (requestCodeResponse202) & {
   headers: Headers;
 };
-;
+export type requestCodeResponseError = (requestCodeResponseDefault) & {
+  headers: Headers;
+};
 
-export type requestCodeResponse = (requestCodeResponseSuccess)
+export type requestCodeResponse = (requestCodeResponseSuccess | requestCodeResponseError)
 
 export const getRequestCodeUrl = () => {
 
@@ -160,12 +215,19 @@ export type verifyCodeResponse200 = {
   status: 200
 }
 
+export type verifyCodeResponseDefault = {
+  data: ApiProblem
+  status: Exclude<HTTPStatusCodes, 200>
+}
+
 export type verifyCodeResponseSuccess = (verifyCodeResponse200) & {
   headers: Headers;
 };
-;
+export type verifyCodeResponseError = (verifyCodeResponseDefault) & {
+  headers: Headers;
+};
 
-export type verifyCodeResponse = (verifyCodeResponseSuccess)
+export type verifyCodeResponse = (verifyCodeResponseSuccess | verifyCodeResponseError)
 
 export const getVerifyCodeUrl = () => {
 
