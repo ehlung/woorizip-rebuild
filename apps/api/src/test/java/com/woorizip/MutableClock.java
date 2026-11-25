@@ -5,11 +5,14 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 
-/** 테스트에서 앞으로 돌릴 수 있는 시계. 시작은 실제 현재 시각이다. */
+/**
+ * 테스트에서 앞으로 돌릴 수 있는 시계. 시작은 실제 현재 시각이고, 서버 시계(ClockConfig)처럼 마이크로초 단위로 끊는다.
+ */
 public class MutableClock extends Clock {
 
-	private volatile Instant now = Instant.now();
+	private volatile Instant now = Instant.now().truncatedTo(ChronoUnit.MICROS);
 
 	public void advance(Duration duration) {
 		this.now = this.now.plus(duration);
