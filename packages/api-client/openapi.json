@@ -11,8 +11,252 @@
   "security" : [ {
     "bearer" : [ ]
   } ],
-  "paths" : { },
+  "paths" : {
+    "/auth/signup" : {
+      "post" : {
+        "operationId" : "signup",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SignupRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SignupResponse"
+                }
+              }
+            },
+            "description" : "Created"
+          },
+          "default" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiProblem"
+                }
+              }
+            },
+            "description" : "오류. 앱은 code로 처리 방식을 정한다"
+          }
+        },
+        "security" : [ ],
+        "tags" : [ "signup-controller" ]
+      }
+    },
+    "/auth/signup/email-code" : {
+      "post" : {
+        "operationId" : "requestCode",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/EmailCodeRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "202" : {
+            "description" : "Accepted"
+          },
+          "default" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiProblem"
+                }
+              }
+            },
+            "description" : "오류. 앱은 code로 처리 방식을 정한다"
+          }
+        },
+        "security" : [ ],
+        "tags" : [ "signup-controller" ]
+      }
+    },
+    "/auth/signup/email-code/verify" : {
+      "post" : {
+        "operationId" : "verifyCode",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/VerifyEmailCodeRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/VerifyEmailCodeResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiProblem"
+                }
+              }
+            },
+            "description" : "오류. 앱은 code로 처리 방식을 정한다"
+          }
+        },
+        "security" : [ ],
+        "tags" : [ "signup-controller" ]
+      }
+    }
+  },
   "components" : {
+    "schemas" : {
+      "ApiFieldError" : {
+        "type" : "object",
+        "properties" : {
+          "field" : {
+            "type" : "string"
+          },
+          "message" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "field", "message" ]
+      },
+      "ApiProblem" : {
+        "type" : "object",
+        "properties" : {
+          "code" : {
+            "type" : "string",
+            "enum" : [ "BAD_REQUEST", "VALIDATION_FAILED", "UNAUTHORIZED", "FORBIDDEN", "NOT_FOUND", "METHOD_NOT_ALLOWED", "UNSUPPORTED_MEDIA_TYPE", "TOO_MANY_REQUESTS", "EMAIL_CODE_INVALID", "EMAIL_CODE_EXPIRED", "SIGNUP_TOKEN_INVALID", "EMAIL_ALREADY_REGISTERED", "INTERNAL_ERROR" ]
+          },
+          "detail" : {
+            "type" : "string"
+          },
+          "errors" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ApiFieldError"
+            }
+          },
+          "instance" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "code", "status" ]
+      },
+      "EmailCodeRequest" : {
+        "type" : "object",
+        "properties" : {
+          "email" : {
+            "type" : "string",
+            "format" : "email",
+            "maxLength" : 320,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "email" ]
+      },
+      "SignupRequest" : {
+        "type" : "object",
+        "properties" : {
+          "consents" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "TERMS_OF_SERVICE", "PRIVACY_POLICY", "AI_DATA_TRANSFER", "AGE_14_OR_OLDER" ]
+            },
+            "uniqueItems" : true
+          },
+          "name" : {
+            "type" : "string",
+            "maxLength" : 20,
+            "minLength" : 0
+          },
+          "password" : {
+            "type" : "string"
+          },
+          "screenSize" : {
+            "type" : "string",
+            "enum" : [ "SMALL", "MEDIUM", "LARGE" ]
+          },
+          "signupToken" : {
+            "type" : "string",
+            "minLength" : 1
+          }
+        },
+        "required" : [ "consents", "name", "password", "screenSize", "signupToken" ]
+      },
+      "SignupResponse" : {
+        "type" : "object",
+        "properties" : {
+          "accessToken" : {
+            "type" : "string"
+          },
+          "accessTokenExpiresAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "userId" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "VerifyEmailCodeRequest" : {
+        "type" : "object",
+        "properties" : {
+          "code" : {
+            "type" : "string",
+            "minLength" : 1,
+            "pattern" : "\\d{6}"
+          },
+          "email" : {
+            "type" : "string",
+            "format" : "email",
+            "maxLength" : 320,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "code", "email" ]
+      },
+      "VerifyEmailCodeResponse" : {
+        "type" : "object",
+        "properties" : {
+          "expiresAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "signupToken" : {
+            "type" : "string"
+          }
+        }
+      }
+    },
     "securitySchemes" : {
       "bearer" : {
         "bearerFormat" : "JWT",

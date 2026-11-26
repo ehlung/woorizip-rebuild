@@ -2,6 +2,7 @@ package com.woorizip.common.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -29,6 +30,10 @@ class SecurityConfig {
 			.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 			.authorizeHttpRequests(requests -> requests
 				.requestMatchers("/actuator/health", "/actuator/health/**")
+				.permitAll()
+				// 가입 (docs/plans/auth.md PR 2)
+				.requestMatchers(HttpMethod.POST, "/auth/signup", "/auth/signup/email-code",
+						"/auth/signup/email-code/verify")
 				.permitAll()
 				// OpenAPI 명세. springdoc.api-docs.enabled가 false인 환경(운영)에서는 주소 자체가 없다.
 				.requestMatchers("/v3/api-docs", "/v3/api-docs/**")

@@ -1,7 +1,6 @@
 package com.woorizip.auth.domain;
 
 import java.time.Instant;
-import java.util.Locale;
 
 import com.woorizip.user.domain.User;
 import jakarta.persistence.Column;
@@ -56,7 +55,7 @@ public class UserIdentity {
 
 	/** 이메일 로그인 수단. 이메일은 소문자로 바꿔 저장해 대소문자가 다른 같은 주소를 한 계정으로 본다. */
 	public static UserIdentity email(User user, String email, String passwordHash) {
-		return new UserIdentity(user, IdentityProvider.EMAIL, email.strip().toLowerCase(Locale.ROOT), passwordHash);
+		return new UserIdentity(user, IdentityProvider.EMAIL, Emails.normalize(email), passwordHash);
 	}
 
 	public Long getId() {
