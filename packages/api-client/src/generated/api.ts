@@ -26,6 +26,8 @@ export const ApiProblemCode = {
   EMAIL_CODE_EXPIRED: 'EMAIL_CODE_EXPIRED',
   SIGNUP_TOKEN_INVALID: 'SIGNUP_TOKEN_INVALID',
   EMAIL_ALREADY_REGISTERED: 'EMAIL_ALREADY_REGISTERED',
+  LOGIN_FAILED: 'LOGIN_FAILED',
+  REFRESH_TOKEN_INVALID: 'REFRESH_TOKEN_INVALID',
   INTERNAL_ERROR: 'INTERNAL_ERROR',
 } as const;
 
@@ -45,6 +47,20 @@ export interface EmailCodeRequest {
      * @maxLength 320
      */
   email: string;
+}
+
+export interface LoginRequest {
+  /**
+     * @minLength 0
+     * @maxLength 320
+     */
+  email: string;
+  password: string;
+}
+
+export interface RefreshRequest {
+  /** @minLength 1 */
+  refreshToken: string;
 }
 
 export type SignupRequestConsentsItem = typeof SignupRequestConsentsItem[keyof typeof SignupRequestConsentsItem];
@@ -79,9 +95,11 @@ export interface SignupRequest {
   signupToken: string;
 }
 
-export interface SignupResponse {
+export interface TokenResponse {
   accessToken?: string;
   accessTokenExpiresAt?: string;
+  refreshToken?: string;
+  refreshTokenExpiresAt?: string;
   userId?: number;
 }
 
@@ -130,8 +148,88 @@ const getHeaders = (...sources: (RequestInit['headers'] | Record<string, string 
   return Object.fromEntries(layers.reverse().flat()) as Extract<RequestInit['headers'], Record<string, unknown>>;
 };
 
+export type loginResponse200 = {
+  data: TokenResponse
+  status: 200
+}
+
+export type loginResponseDefault = {
+  data: ApiProblem
+  status: Exclude<HTTPStatusCodes, 200>
+}
+
+export type loginResponseSuccess = (loginResponse200) & {
+  headers: Headers;
+};
+export type loginResponseError = (loginResponseDefault) & {
+  headers: Headers;
+};
+
+export type loginResponse = (loginResponseSuccess | loginResponseError)
+
+export const getLoginUrl = () => {
+
+
+
+
+  return `/auth/login`
+}
+
+export const login = async (loginRequest: LoginRequest, options?: Parameters<typeof apiFetch>[1]): Promise<loginResponse> => {
+
+  return apiFetch<loginResponse>(getLoginUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: getHeaders({ 'Content-Type': 'application/json' }, options?.headers),
+    body: JSON.stringify(loginRequest)
+  }
+);}
+
+
+
+export type logoutResponse204 = {
+  data: void
+  status: 204
+}
+
+export type logoutResponseDefault = {
+  data: ApiProblem
+  status: Exclude<HTTPStatusCodes, 204>
+}
+
+export type logoutResponseSuccess = (logoutResponse204) & {
+  headers: Headers;
+};
+export type logoutResponseError = (logoutResponseDefault) & {
+  headers: Headers;
+};
+
+export type logoutResponse = (logoutResponseSuccess | logoutResponseError)
+
+export const getLogoutUrl = () => {
+
+
+
+
+  return `/auth/logout`
+}
+
+export const logout = async (refreshRequest: RefreshRequest, options?: Parameters<typeof apiFetch>[1]): Promise<logoutResponse> => {
+
+  return apiFetch<logoutResponse>(getLogoutUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: getHeaders({ 'Content-Type': 'application/json' }, options?.headers),
+    body: JSON.stringify(refreshRequest)
+  }
+);}
+
+
+
 export type signupResponse201 = {
-  data: SignupResponse
+  data: TokenResponse
   status: 201
 }
 
@@ -245,5 +343,45 @@ export const verifyCode = async (verifyEmailCodeRequest: VerifyEmailCodeRequest,
     method: 'POST',
     headers: getHeaders({ 'Content-Type': 'application/json' }, options?.headers),
     body: JSON.stringify(verifyEmailCodeRequest)
+  }
+);}
+
+
+
+export type refreshResponse200 = {
+  data: TokenResponse
+  status: 200
+}
+
+export type refreshResponseDefault = {
+  data: ApiProblem
+  status: Exclude<HTTPStatusCodes, 200>
+}
+
+export type refreshResponseSuccess = (refreshResponse200) & {
+  headers: Headers;
+};
+export type refreshResponseError = (refreshResponseDefault) & {
+  headers: Headers;
+};
+
+export type refreshResponse = (refreshResponseSuccess | refreshResponseError)
+
+export const getRefreshUrl = () => {
+
+
+
+
+  return `/auth/token/refresh`
+}
+
+export const refresh = async (refreshRequest: RefreshRequest, options?: Parameters<typeof apiFetch>[1]): Promise<refreshResponse> => {
+
+  return apiFetch<refreshResponse>(getRefreshUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: getHeaders({ 'Content-Type': 'application/json' }, options?.headers),
+    body: JSON.stringify(refreshRequest)
   }
 );}

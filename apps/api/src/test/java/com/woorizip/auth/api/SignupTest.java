@@ -91,6 +91,7 @@ class SignupTest {
 
 		String body = signup(signupToken, PASSWORD, allConsents()).andExpect(status().isCreated())
 			.andExpect(jsonPath("$.accessToken").isNotEmpty())
+			.andExpect(jsonPath("$.refreshToken").isNotEmpty())
 			.andReturn()
 			.getResponse()
 			.getContentAsString();

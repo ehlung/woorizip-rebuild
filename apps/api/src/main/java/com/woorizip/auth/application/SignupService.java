@@ -41,7 +41,7 @@ import org.springframework.transaction.annotation.Transactional;
  * <ol>
  * <li>코드 요청: 6자리 코드를 메일로 보낸다. 이미 가입된 이메일이면 코드 대신 안내 메일을 보내고, 응답은 같다.</li>
  * <li>코드 확인: 맞으면 가입 확인 값을 발급한다.</li>
- * <li>가입: 확인 값을 검증하고 계정을 만든 뒤 access token을 발급한다.</li>
+ * <li>가입: 확인 값을 검증하고 계정을 만든 뒤 access token과 refresh token을 발급한다.</li>
  * </ol>
  */
 @Service
@@ -79,7 +79,7 @@ public class SignupService {
 
 	private final PasswordEncoder passwordEncoder;
 
-	private final AccessTokenIssuer accessTokens;
+	private final SessionTokens sessions;
 
 	private final AdvisoryLocks locks;
 
@@ -87,7 +87,7 @@ public class SignupService {
 
 	SignupService(EmailCodeRepository codes, SignupTicketRepository tickets, UserRepository users,
 			UserIdentityRepository identities, UserConsentRepository consents, MailOutbox mails,
-			PasswordEncoder passwordEncoder, AccessTokenIssuer accessTokens, AdvisoryLocks locks, Clock clock) {
+			PasswordEncoder passwordEncoder, SessionTokens sessions, AdvisoryLocks locks, Clock clock) {
 		this.codes = codes;
 		this.tickets = tickets;
 		this.users = users;
@@ -95,7 +95,7 @@ public class SignupService {
 		this.consents = consents;
 		this.mails = mails;
 		this.passwordEncoder = passwordEncoder;
-		this.accessTokens = accessTokens;
+		this.sessions = sessions;
 		this.locks = locks;
 		this.clock = clock;
 	}
@@ -146,7 +146,7 @@ public class SignupService {
 	}
 
 	@Transactional
-	public SignedUp signup(SignupCommand command) {
+	public SessionTokens.Tokens signup(SignupCommand command) {
 		validate(command);
 		Instant now = this.clock.instant();
 		SignupTicket ticket = this.tickets.findByTokenHash(SecretHashing.sha256(command.signupToken()))
@@ -168,8 +168,7 @@ public class SignupService {
 		for (ConsentKind kind : command.consents()) {
 			this.consents.save(new UserConsent(user, kind, CONSENT_VERSION, now));
 		}
-		AccessTokenIssuer.AccessToken token = this.accessTokens.issue(user.getId());
-		return new SignedUp(user.getId(), token);
+		return this.sessions.startSession(user);
 	}
 
 	private static void validate(SignupCommand command) {
@@ -193,9 +192,6 @@ public class SignupService {
 
 	public record SignupCommand(String signupToken, String password, String name, ScreenSize screenSize,
 			Set<ConsentKind> consents) {
-	}
-
-	public record SignedUp(long userId, AccessTokenIssuer.AccessToken accessToken) {
 	}
 
 	/** 가입 메일 문구. 본문에는 코드와 안내만 담는다(ADR 0018). */

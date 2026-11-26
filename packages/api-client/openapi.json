@@ -12,6 +12,77 @@
     "bearer" : [ ]
   } ],
   "paths" : {
+    "/auth/login" : {
+      "post" : {
+        "operationId" : "login",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TokenResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiProblem"
+                }
+              }
+            },
+            "description" : "오류. 앱은 code로 처리 방식을 정한다"
+          }
+        },
+        "security" : [ ],
+        "tags" : [ "auth-controller" ]
+      }
+    },
+    "/auth/logout" : {
+      "post" : {
+        "operationId" : "logout",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RefreshRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          },
+          "default" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiProblem"
+                }
+              }
+            },
+            "description" : "오류. 앱은 code로 처리 방식을 정한다"
+          }
+        },
+        "security" : [ ],
+        "tags" : [ "auth-controller" ]
+      }
+    },
     "/auth/signup" : {
       "post" : {
         "operationId" : "signup",
@@ -30,7 +101,7 @@
             "content" : {
               "*/*" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/SignupResponse"
+                  "$ref" : "#/components/schemas/TokenResponse"
                 }
               }
             },
@@ -121,6 +192,45 @@
         "security" : [ ],
         "tags" : [ "signup-controller" ]
       }
+    },
+    "/auth/token/refresh" : {
+      "post" : {
+        "operationId" : "refresh",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RefreshRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TokenResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiProblem"
+                }
+              }
+            },
+            "description" : "오류. 앱은 code로 처리 방식을 정한다"
+          }
+        },
+        "security" : [ ],
+        "tags" : [ "auth-controller" ]
+      }
     }
   },
   "components" : {
@@ -142,7 +252,7 @@
         "properties" : {
           "code" : {
             "type" : "string",
-            "enum" : [ "BAD_REQUEST", "VALIDATION_FAILED", "UNAUTHORIZED", "FORBIDDEN", "NOT_FOUND", "METHOD_NOT_ALLOWED", "UNSUPPORTED_MEDIA_TYPE", "TOO_MANY_REQUESTS", "EMAIL_CODE_INVALID", "EMAIL_CODE_EXPIRED", "SIGNUP_TOKEN_INVALID", "EMAIL_ALREADY_REGISTERED", "INTERNAL_ERROR" ]
+            "enum" : [ "BAD_REQUEST", "VALIDATION_FAILED", "UNAUTHORIZED", "FORBIDDEN", "NOT_FOUND", "METHOD_NOT_ALLOWED", "UNSUPPORTED_MEDIA_TYPE", "TOO_MANY_REQUESTS", "EMAIL_CODE_INVALID", "EMAIL_CODE_EXPIRED", "SIGNUP_TOKEN_INVALID", "EMAIL_ALREADY_REGISTERED", "LOGIN_FAILED", "REFRESH_TOKEN_INVALID", "INTERNAL_ERROR" ]
           },
           "detail" : {
             "type" : "string"
@@ -181,6 +291,31 @@
         },
         "required" : [ "email" ]
       },
+      "LoginRequest" : {
+        "type" : "object",
+        "properties" : {
+          "email" : {
+            "type" : "string",
+            "format" : "email",
+            "maxLength" : 320,
+            "minLength" : 0
+          },
+          "password" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "email", "password" ]
+      },
+      "RefreshRequest" : {
+        "type" : "object",
+        "properties" : {
+          "refreshToken" : {
+            "type" : "string",
+            "minLength" : 1
+          }
+        },
+        "required" : [ "refreshToken" ]
+      },
       "SignupRequest" : {
         "type" : "object",
         "properties" : {
@@ -211,13 +346,20 @@
         },
         "required" : [ "consents", "name", "password", "screenSize", "signupToken" ]
       },
-      "SignupResponse" : {
+      "TokenResponse" : {
         "type" : "object",
         "properties" : {
           "accessToken" : {
             "type" : "string"
           },
           "accessTokenExpiresAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "refreshToken" : {
+            "type" : "string"
+          },
+          "refreshTokenExpiresAt" : {
             "type" : "string",
             "format" : "date-time"
           },
