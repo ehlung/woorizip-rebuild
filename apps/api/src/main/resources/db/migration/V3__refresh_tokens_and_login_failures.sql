@@ -14,7 +14,7 @@ CREATE TABLE refresh_tokens (
     -- 발급 후 30일. 세션 시작 후 1년을 넘지 않는다.
     expires_at         TIMESTAMPTZ NOT NULL,
     created_at         TIMESTAMPTZ NOT NULL,
-    -- 새 토큰으로 바꾼 시각. 이 토큰이 다시 오면 탈취로 보고 사용자의 토큰을 모두 폐기한다.
+    -- 새 토큰으로 바꾼 시각. 30초가 지난 뒤 이 토큰이 다시 오면 탈취로 보고 사용자의 토큰을 모두 폐기한다.
     rotated_at         TIMESTAMPTZ,
     -- 로그아웃, 탈취 의심, 비밀번호 재설정으로 폐기한 시각
     revoked_at         TIMESTAMPTZ
@@ -24,6 +24,7 @@ CREATE INDEX refresh_tokens_active_by_user ON refresh_tokens (user_id) WHERE rev
 CREATE INDEX refresh_tokens_by_session ON refresh_tokens (session_id);
 
 -- 같은 이메일의 연속 로그인 실패. 가입하지 않은 이메일도 같은 규칙으로 센다(A-47).
+-- 5번부터 잠그고(30초에서 2배씩, 최대 15분), 100번이면 비밀번호를 재설정해야 한다.
 CREATE TABLE login_failures (
     -- 소문자로 바꾼 이메일 주소
     email                VARCHAR(320) PRIMARY KEY,

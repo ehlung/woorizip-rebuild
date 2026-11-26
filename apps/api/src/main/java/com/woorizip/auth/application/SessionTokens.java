@@ -21,6 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
  * <li>refresh token은 무작위 256비트이고 해시만 저장한다.</li>
  * <li>재발급할 때마다 같은 세션의 새 토큰으로 바꾼다(rotation). 이미 바꾼 토큰이 다시 오면 탈취로 보고 그 사용자의 토큰을
  * 모두 폐기한다.</li>
+ * <li>단, 바꾼 지 30초 안에 다시 온 토큰은 받아 같은 세션의 새 토큰을 한 번 더 발급한다. 같은 토큰으로 동시에 보낸 요청이나,
+ * 새 토큰을 담은 응답이 연결 문제로 앱에 닿지 않아 다시 보낸 요청을 탈취로 오해하지 않기 위해서다.</li>
  * <li>만료는 발급 시각부터 30일이고, 세션을 시작한 뒤 1년을 넘지 않는다.</li>
  * </ul>
  */
@@ -30,6 +32,9 @@ public class SessionTokens {
 	static final Duration REFRESH_IDLE_TTL = Duration.ofDays(30);
 
 	static final Duration SESSION_MAX_AGE = Duration.ofDays(365);
+
+	/** 바꾼 토큰을 아직 받아 주는 시간. Okta의 기본값(30초)과 같게 둔다. */
+	static final Duration ROTATION_GRACE = Duration.ofSeconds(30);
 
 	private final RefreshTokenRepository refreshTokens;
 
@@ -62,7 +67,7 @@ public class SessionTokens {
 		if (current.isRevoked()) {
 			throw invalid();
 		}
-		if (current.isRotated()) {
+		if (current.isRotated() && !current.wasRotatedWithin(ROTATION_GRACE, now)) {
 			// 이미 바꾼 토큰이 다시 왔다. 훔친 쪽과 원래 사용자 중 누구인지 알 수 없어 모두 끊는다(RFC 9700).
 			this.refreshTokens.revokeAllOfUser(current.getUser().getId(), now);
 			throw invalid();
@@ -70,7 +75,10 @@ public class SessionTokens {
 		if (current.isExpired(now)) {
 			throw invalid();
 		}
-		current.markRotated(now);
+		if (!current.isRotated()) {
+			current.markRotated(now);
+		}
+		// 유예 시간 안에 다시 온 경우에는 바꾼 시각을 그대로 두어 유예 시간이 늘어나지 않게 한다.
 		return issue(current.getUser(), current.getSessionId(), current.getSessionStartedAt(), now);
 	}
 

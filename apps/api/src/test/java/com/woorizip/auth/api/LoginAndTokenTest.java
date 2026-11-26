@@ -3,6 +3,7 @@ package com.woorizip.auth.api;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -10,6 +11,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 
 import com.jayway.jsonpath.JsonPath;
 import com.woorizip.MutableClock;
@@ -18,6 +21,8 @@ import com.woorizip.TestcontainersConfiguration;
 import com.woorizip.auth.application.JwtKeys;
 import com.woorizip.auth.application.JwtProperties;
 import com.woorizip.auth.application.SecretHashing;
+import com.woorizip.auth.domain.LoginFailure;
+import com.woorizip.auth.domain.LoginFailureRepository;
 import com.woorizip.auth.domain.RefreshToken;
 import com.woorizip.auth.domain.RefreshTokenRepository;
 import com.woorizip.auth.domain.UserIdentity;
@@ -75,6 +80,9 @@ class LoginAndTokenTest {
 
 	@Autowired
 	RefreshTokenRepository refreshTokens;
+
+	@Autowired
+	LoginFailureRepository loginFailures;
 
 	@Autowired
 	PasswordEncoder passwordEncoder;
@@ -143,11 +151,43 @@ class LoginAndTokenTest {
 		String first = refreshTokenOf(loginBody(email));
 		String otherDevice = refreshTokenOf(loginBody(email));
 		String second = refreshTokenOf(refreshBody(first));
+		this.clock.advance(Duration.ofSeconds(30));
 
 		refresh(first).andExpect(status().isUnauthorized());
 
 		refresh(second).andExpect(status().isUnauthorized());
 		refresh(otherDevice).andExpect(status().isUnauthorized());
+	}
+
+	@Test
+	void 바꾼_지_30초_안에_다시_온_refresh_token은_받아_주고_양쪽_토큰_모두_쓸_수_있다() throws Exception {
+		String first = refreshTokenOf(loginBody(newUser()));
+		String received = refreshTokenOf(refreshBody(first));
+
+		// 새 토큰을 담은 응답이 앱에 닿지 않아 앱이 같은 토큰으로 다시 보낸 경우
+		this.clock.advance(Duration.ofSeconds(29));
+		String retried = refreshTokenOf(refreshBody(first));
+
+		refresh(received).andExpect(status().isOk());
+		refresh(retried).andExpect(status().isOk());
+	}
+
+	@Test
+	void 같은_refresh_token으로_동시에_재발급해도_둘_다_성공하고_토큰이_폐기되지_않는다() throws Exception {
+		String token = refreshTokenOf(loginBody(newUser()));
+		CountDownLatch start = new CountDownLatch(1);
+		List<CompletableFuture<Integer>> requests = List.of(1, 2).stream().map(i -> CompletableFuture.supplyAsync(() -> {
+			try {
+				start.await();
+				return refresh(token).andReturn().getResponse().getStatus();
+			}
+			catch (Exception ex) {
+				throw new IllegalStateException(ex);
+			}
+		})).toList();
+		start.countDown();
+
+		assertThat(requests.stream().map(CompletableFuture::join)).containsExactly(200, 200);
 	}
 
 	@Test
@@ -228,20 +268,31 @@ class LoginAndTokenTest {
 			login(unknown, "틀린 비밀번호입니다");
 		}
 
-		login(registered, PASSWORD).andExpect(status().isTooManyRequests());
-		login(unknown, PASSWORD).andExpect(status().isTooManyRequests());
+		String lockedRegistered = login(registered, PASSWORD).andExpect(status().isTooManyRequests())
+			.andReturn()
+			.getResponse()
+			.getContentAsString();
+		String lockedUnknown = login(unknown, PASSWORD).andExpect(status().isTooManyRequests())
+			.andReturn()
+			.getResponse()
+			.getContentAsString();
+		assertThat(lockedRegistered).isEqualTo(lockedUnknown);
 	}
 
 	@Test
-	void 다섯_번_연속_실패하면_1분_잠기고_성공하면_초기화된다() throws Exception {
+	void 다섯_번_연속_실패하면_30초_잠기고_남은_시간을_알려_주며_성공하면_초기화된다() throws Exception {
 		String email = newUser();
 		for (int i = 0; i < 5; i++) {
 			login(email, "틀린 비밀번호입니다").andExpect(status().isUnauthorized());
 		}
 		login(email, PASSWORD).andExpect(status().isTooManyRequests())
-			.andExpect(jsonPath("$.code").value("TOO_MANY_REQUESTS"));
+			.andExpect(jsonPath("$.code").value("LOGIN_LOCKED"))
+			.andExpect(header().string(HttpHeaders.RETRY_AFTER, "30"));
 
-		this.clock.advance(Duration.ofMinutes(1));
+		this.clock.advance(Duration.ofMillis(10_500));
+		login(email, PASSWORD).andExpect(header().string(HttpHeaders.RETRY_AFTER, "20"));
+
+		this.clock.advance(Duration.ofMillis(19_500));
 		login(email, PASSWORD).andExpect(status().isOk());
 
 		// 초기화됐으므로 다시 4번까지는 잠기지 않는다.
@@ -249,6 +300,22 @@ class LoginAndTokenTest {
 			login(email, "틀린 비밀번호입니다").andExpect(status().isUnauthorized());
 		}
 		login(email, PASSWORD).andExpect(status().isOk());
+	}
+
+	@Test
+	void 연속_100번_실패하면_맞는_비밀번호로도_로그인할_수_없고_비밀번호_재설정을_안내한다() throws Exception {
+		String email = newUser();
+		LoginFailure failure = new LoginFailure(email);
+		for (int i = 0; i < LoginFailure.MAX_CONSECUTIVE_FAILURES - 1; i++) {
+			failure.recordFailure(this.clock.instant().minus(Duration.ofDays(1)));
+		}
+		this.loginFailures.save(failure);
+
+		login(email, "틀린 비밀번호입니다").andExpect(status().isUnauthorized());
+
+		this.clock.advance(Duration.ofDays(1));
+		login(email, PASSWORD).andExpect(status().isForbidden())
+			.andExpect(jsonPath("$.code").value("PASSWORD_RESET_REQUIRED"));
 	}
 
 	@Test

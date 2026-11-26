@@ -1,5 +1,6 @@
 package com.woorizip.common.error;
 
+import java.time.Duration;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -34,7 +35,19 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 		if (!ex.errors().isEmpty()) {
 			return respond(ApiProblem.validationFailed(ex.errors()));
 		}
-		return respond(ApiProblem.of(ex.code(), ex.getMessage()));
+		ApiProblem problem = ApiProblem.of(ex.code(), ex.getMessage());
+		if (ex.retryAfter() != null) {
+			return ResponseEntity.status(problem.getStatus())
+				.header(HttpHeaders.RETRY_AFTER, Long.toString(retryAfterSeconds(ex.retryAfter())))
+				.body(problem);
+		}
+		return respond(problem);
+	}
+
+	/** Retry-After는 0 이상의 정수 초다(RFC 9110 10.2.3). 너무 일찍 다시 시도하지 않도록 올림하고, 최소 1초로 한다. */
+	static long retryAfterSeconds(Duration wait) {
+		long seconds = wait.toSeconds() + (wait.toNanosPart() > 0 ? 1 : 0);
+		return Math.max(1, seconds);
 	}
 
 	@ExceptionHandler(AuthenticationException.class)
