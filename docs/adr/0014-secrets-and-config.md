@@ -89,6 +89,8 @@ AWS Systems Manager Parameter Store(SecureString) 또는 Secrets Manager에 두�
 - 얻는 것: 비밀값이 저장소와 빌드 결과물에 들어가지 않는다. 한 장치를 우회해도 CI에서 막힌다. 오래 사는 비밀값 수가 줄었다.
 - 잃는 것: AWS에 묶인다. 로컬 개발 환경을 따로 준비해야 한다.
 - 후속 작업: CI 구성 시 gitleaks 단계 추가, 0017 확정 후 IAM 역할별 읽기 권한 정리
+  - gitleaks는 계속 쓴다(2026-11-26). gitleaks README는 앞으로 보안 패치만 낸다고 공지했고, 관리자는 Betterleaks로 옮겨 갔다(https://github.com/gitleaks/gitleaks). 이 저장소가 쓰는 기능은 커밋 전 검사와 CI 검사뿐이라 새 기능이 필요 없다. Betterleaks는 정식 버전이 v1이고 v2가 후보(rc) 단계인데, v2에서 CLI와 설정 형식이 바뀐다(https://github.com/betterleaks/betterleaks). Betterleaks 조직이 만든 GitHub Action도 아직 없다. 지금 옮기면 v2 때 한 번 더 옮겨야 하고, CI에 개인이 만든 액션을 써야 한다.
+  - 다시 판단하는 시점: Betterleaks v2 정식 버전이 나오거나, gitleaks가 보안 패치를 내지 않게 될 때. 옮길 때는 v2로 바로 옮기고, CI는 외부 액션 대신 공식 릴리스 파일을 받아 체크섬을 확인한 뒤 실행한다.
 
 ## 검증
 
