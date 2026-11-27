@@ -1,6 +1,6 @@
 # 현황
 
-기준일: 2026-11-26
+기준일: 2026-11-27
 
 ## 지금 하는 일
 
@@ -24,9 +24,9 @@
 | --- | --- |
 | [01-legacy-analysis.md](01-legacy-analysis.md) | 초안 완료 |
 | [02-domain-and-problem.md](02-domain-and-problem.md) | 초안 완료 |
-| [ADR](adr/) | 18개 중 14개 채택(0001~0004, 0006~0011, 0014~0016, 0018), 2개 제안(0005, 0012) |
+| [ADR](adr/) | 20개 중 16개 채택(0001~0004, 0006~0011, 0014~0016, 0018~0020), 2개 제안(0005, 0012) |
 | [03-architecture.md](03-architecture.md) | 초안 완료. 미정 항목은 12장 |
-| [04-evaluation.md](04-evaluation.md) | 초안 완료 (assertion 88개 중 21개 통과, rubric 초안, 운영 지표 기준값 초안) |
+| [04-evaluation.md](04-evaluation.md) | 초안 완료 (assertion 91개 중 24개 통과, rubric 초안, 운영 지표 기준값 초안) |
 | [plans/](plans/) | 작업 단위별 계획과 진행. 지금은 [가입·로그인](plans/auth.md) |
 | [README.md](../README.md) | 새 구조에 맞게 다시 씀 |
 | [user-flows.md](user-flows.md) | 단계 표시와 지금까지의 결정 반영 |

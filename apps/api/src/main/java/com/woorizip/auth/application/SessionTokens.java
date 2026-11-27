@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * access token과 refresh token을 발급하고 바꾼다 (ADR 0009).
+ * access token과 refresh token을 발급하고 바꾼다 (ADR 0009, 재사용 판정은 ADR 0019).
  *
  * <ul>
  * <li>refresh token은 무작위 256비트이고 해시만 저장한다.</li>

@@ -54,7 +54,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 로그인, 토큰 재발급, 로그아웃 (ADR 0009의 검증 항목). A-37, 38, 40, 41, 42, 44, 47, 48을 확인한다.
+ * 로그인, 토큰 재발급, 로그아웃 (ADR 0009의 검증 항목). A-37, 38, 40, 41, 42, 44, 47, 48, 89, 90을 확인한다.
  *
  * <p>로그인이 필요한 API가 아직 없어서, 이 테스트에서만 쓰는 {@link TestApi}로 access token을 확인한다.
  */
@@ -125,7 +125,7 @@ class LoginAndTokenTest {
 	}
 
 	@Test
-	void A38_로그아웃한_기기의_refresh_token으로_재발급하면_거부된다() throws Exception {
+	void A38_A90_로그아웃한_기기의_refresh_token으로_재발급하면_거부되고_다른_기기는_유지된다() throws Exception {
 		String email = newUser();
 		String phone = refreshTokenOf(loginBody(email));
 		String tablet = refreshTokenOf(loginBody(email));
@@ -160,7 +160,7 @@ class LoginAndTokenTest {
 	}
 
 	@Test
-	void 바꾼_지_30초_안에_다시_온_refresh_token은_받아_주고_양쪽_토큰_모두_쓸_수_있다() throws Exception {
+	void A89_바꾼_지_30초_안에_다시_온_refresh_token은_받아_주고_양쪽_토큰_모두_쓸_수_있다() throws Exception {
 		String first = refreshTokenOf(loginBody(newUser()));
 		String received = refreshTokenOf(refreshBody(first));
 
@@ -173,7 +173,7 @@ class LoginAndTokenTest {
 	}
 
 	@Test
-	void 같은_refresh_token으로_동시에_재발급해도_둘_다_성공하고_토큰이_폐기되지_않는다() throws Exception {
+	void A89_같은_refresh_token으로_동시에_재발급해도_둘_다_성공하고_토큰이_폐기되지_않는다() throws Exception {
 		String token = refreshTokenOf(loginBody(newUser()));
 		CountDownLatch start = new CountDownLatch(1);
 		List<CompletableFuture<Integer>> requests = List.of(1, 2).stream().map(i -> CompletableFuture.supplyAsync(() -> {
