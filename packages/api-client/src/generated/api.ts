@@ -26,6 +26,7 @@ export const ApiProblemCode = {
   EMAIL_CODE_EXPIRED: 'EMAIL_CODE_EXPIRED',
   SIGNUP_TOKEN_INVALID: 'SIGNUP_TOKEN_INVALID',
   EMAIL_ALREADY_REGISTERED: 'EMAIL_ALREADY_REGISTERED',
+  PASSWORD_RESET_TOKEN_INVALID: 'PASSWORD_RESET_TOKEN_INVALID',
   LOGIN_FAILED: 'LOGIN_FAILED',
   LOGIN_LOCKED: 'LOGIN_LOCKED',
   PASSWORD_RESET_REQUIRED: 'PASSWORD_RESET_REQUIRED',
@@ -63,6 +64,12 @@ export interface LoginRequest {
 export interface RefreshRequest {
   /** @minLength 1 */
   refreshToken: string;
+}
+
+export interface ResetPasswordRequest {
+  newPassword: string;
+  /** @minLength 1 */
+  resetToken: string;
 }
 
 export type SignupRequestConsentsItem = typeof SignupRequestConsentsItem[keyof typeof SignupRequestConsentsItem];
@@ -121,6 +128,24 @@ export interface VerifyEmailCodeRequest {
 export interface VerifyEmailCodeResponse {
   expiresAt?: string;
   signupToken?: string;
+}
+
+export interface VerifyResetCodeRequest {
+  /**
+     * @minLength 1
+     * @pattern \d{6}
+     */
+  code: string;
+  /**
+     * @minLength 0
+     * @maxLength 320
+     */
+  email: string;
+}
+
+export interface VerifyResetCodeResponse {
+  expiresAt?: string;
+  resetToken?: string;
 }
 
 export type HTTPStatusCode1xx = 100 | 101 | 102 | 103;
@@ -225,6 +250,126 @@ export const logout = async (refreshRequest: RefreshRequest, options?: Parameter
     method: 'POST',
     headers: getHeaders({ 'Content-Type': 'application/json' }, options?.headers),
     body: JSON.stringify(refreshRequest)
+  }
+);}
+
+
+
+export type resetResponse204 = {
+  data: void
+  status: 204
+}
+
+export type resetResponseDefault = {
+  data: ApiProblem
+  status: Exclude<HTTPStatusCodes, 204>
+}
+
+export type resetResponseSuccess = (resetResponse204) & {
+  headers: Headers;
+};
+export type resetResponseError = (resetResponseDefault) & {
+  headers: Headers;
+};
+
+export type resetResponse = (resetResponseSuccess | resetResponseError)
+
+export const getResetUrl = () => {
+
+
+
+
+  return `/auth/password-reset`
+}
+
+export const reset = async (resetPasswordRequest: ResetPasswordRequest, options?: Parameters<typeof apiFetch>[1]): Promise<resetResponse> => {
+
+  return apiFetch<resetResponse>(getResetUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: getHeaders({ 'Content-Type': 'application/json' }, options?.headers),
+    body: JSON.stringify(resetPasswordRequest)
+  }
+);}
+
+
+
+export type requestCode1Response202 = {
+  data: void
+  status: 202
+}
+
+export type requestCode1ResponseDefault = {
+  data: ApiProblem
+  status: Exclude<HTTPStatusCodes, 202>
+}
+
+export type requestCode1ResponseSuccess = (requestCode1Response202) & {
+  headers: Headers;
+};
+export type requestCode1ResponseError = (requestCode1ResponseDefault) & {
+  headers: Headers;
+};
+
+export type requestCode1Response = (requestCode1ResponseSuccess | requestCode1ResponseError)
+
+export const getRequestCode1Url = () => {
+
+
+
+
+  return `/auth/password-reset/email-code`
+}
+
+export const requestCode1 = async (emailCodeRequest: EmailCodeRequest, options?: Parameters<typeof apiFetch>[1]): Promise<requestCode1Response> => {
+
+  return apiFetch<requestCode1Response>(getRequestCode1Url(),
+  {
+    ...options,
+    method: 'POST',
+    headers: getHeaders({ 'Content-Type': 'application/json' }, options?.headers),
+    body: JSON.stringify(emailCodeRequest)
+  }
+);}
+
+
+
+export type verifyCode1Response200 = {
+  data: VerifyResetCodeResponse
+  status: 200
+}
+
+export type verifyCode1ResponseDefault = {
+  data: ApiProblem
+  status: Exclude<HTTPStatusCodes, 200>
+}
+
+export type verifyCode1ResponseSuccess = (verifyCode1Response200) & {
+  headers: Headers;
+};
+export type verifyCode1ResponseError = (verifyCode1ResponseDefault) & {
+  headers: Headers;
+};
+
+export type verifyCode1Response = (verifyCode1ResponseSuccess | verifyCode1ResponseError)
+
+export const getVerifyCode1Url = () => {
+
+
+
+
+  return `/auth/password-reset/email-code/verify`
+}
+
+export const verifyCode1 = async (verifyResetCodeRequest: VerifyResetCodeRequest, options?: Parameters<typeof apiFetch>[1]): Promise<verifyCode1Response> => {
+
+  return apiFetch<verifyCode1Response>(getVerifyCode1Url(),
+  {
+    ...options,
+    method: 'POST',
+    headers: getHeaders({ 'Content-Type': 'application/json' }, options?.headers),
+    body: JSON.stringify(verifyResetCodeRequest)
   }
 );}
 

@@ -7,6 +7,12 @@ public enum MailKind {
 	SIGNUP_CODE,
 
 	/** 이미 가입된 이메일로 가입 코드를 요청했을 때의 안내 */
-	SIGNUP_ALREADY_REGISTERED
+	SIGNUP_ALREADY_REGISTERED,
+
+	/** 비밀번호 재설정 코드 */
+	PASSWORD_RESET_CODE,
+
+	/** 비밀번호가 바뀌었다는 안내 */
+	PASSWORD_CHANGED
 
 }

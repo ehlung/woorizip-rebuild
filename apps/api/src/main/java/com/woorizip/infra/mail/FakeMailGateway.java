@@ -1,7 +1,10 @@
 package com.woorizip.infra.mail;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
@@ -25,13 +28,53 @@ public class FakeMailGateway implements MailGateway {
 
 	private final AtomicInteger failuresToSimulate = new AtomicInteger();
 
+	private volatile CountDownLatch hold = new CountDownLatch(0);
+
 	@Override
-	public synchronized void send(Mail mail) {
-		if (this.failuresToSimulate.getAndUpdate(n -> Math.max(0, n - 1)) > 0) {
-			throw new IllegalStateException("가짜 발송 실패(테스트용)");
+	public void send(Mail mail) {
+		awaitRelease();
+		synchronized (this) {
+			if (this.failuresToSimulate.getAndUpdate(n -> Math.max(0, n - 1)) > 0) {
+				throw new IllegalStateException("가짜 발송 실패(테스트용)");
+			}
+			this.sent.add(mail);
+			notifyAll();
 		}
-		this.sent.add(mail);
 		log.info("가짜 메일 발송: to={}, subject={}\n{}", mail.to(), mail.subject(), mail.body());
+	}
+
+	/** {@link #release()}를 부를 때까지 발송을 붙잡아 둔다. 메일 서버가 느린 경우를 흉내 낸다(테스트용). */
+	public void hold() {
+		this.hold = new CountDownLatch(1);
+	}
+
+	public void release() {
+		this.hold.countDown();
+	}
+
+	/** 그 주소로 {@code count}통이 보내질 때까지 기다린다(테스트용). */
+	public synchronized List<Mail> awaitSentTo(String to, int count, Duration timeout) throws InterruptedException {
+		long deadline = System.nanoTime() + timeout.toNanos();
+		while (sentTo(to).size() < count) {
+			long remaining = deadline - System.nanoTime();
+			if (remaining <= 0) {
+				throw new IllegalStateException(to + "로 " + count + "통이 보내지지 않았다");
+			}
+			TimeUnit.NANOSECONDS.timedWait(this, remaining);
+		}
+		return sentTo(to);
+	}
+
+	private void awaitRelease() {
+		try {
+			if (!this.hold.await(10, TimeUnit.SECONDS)) {
+				throw new IllegalStateException("가짜 발송이 풀리지 않았다(테스트용)");
+			}
+		}
+		catch (InterruptedException ex) {
+			Thread.currentThread().interrupt();
+			throw new IllegalStateException(ex);
+		}
 	}
 
 	/** 그 주소로 보낸 메일, 보낸 순서대로. */
