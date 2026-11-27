@@ -39,7 +39,8 @@ import org.springframework.transaction.annotation.Transactional;
  * 이메일 가입 (03-architecture 8장, user-flows A).
  *
  * <ol>
- * <li>코드 요청: 6자리 코드를 메일로 보낸다. 이미 가입된 이메일이면 코드 대신 안내 메일을 보내고, 응답은 같다.</li>
+ * <li>코드 요청: 6자리 코드를 메일로 보낸다. 이미 가입된 이메일이면 코드는 저장만 하고 대신 안내 메일을 보낸다. 응답은
+ * 같다.</li>
  * <li>코드 확인: 맞으면 가입 확인 값을 발급한다.</li>
  * <li>가입: 확인 값을 검증하고 계정을 만든 뒤 access token과 refresh token을 발급한다.</li>
  * </ol>
@@ -113,14 +114,16 @@ public class SignupService {
 				|| this.mails.countSince(email, SIGNUP_MAILS, now.minus(Duration.ofDays(1))) >= DAILY_REQUEST_LIMIT) {
 			throw new ApiException(ErrorCode.TOO_MANY_REQUESTS);
 		}
+		// 이미 가입된 이메일에도 코드를 저장하되 보내지는 않는다. 코드 확인 응답(틀림, 5회 뒤 만료)이 가입하지 않은
+		// 이메일과 같아야 코드 확인 API로도 가입 여부를 알 수 없다(A-85).
+		String code = SecretHashing.newSixDigitCode();
+		Instant expiresAt = now.plus(CODE_TTL);
+		this.codes.save(new EmailCode(EmailCodePurpose.SIGNUP, email, codeHash(email, code), now, expiresAt));
 		if (this.identities.existsByProviderAndSubject(IdentityProvider.EMAIL, email)) {
 			this.mails.enqueue(MailKind.SIGNUP_ALREADY_REGISTERED, SignupMails.alreadyRegistered(email),
 					now.plus(ALREADY_REGISTERED_MAIL_TTL));
 			return;
 		}
-		String code = SecretHashing.newSixDigitCode();
-		Instant expiresAt = now.plus(CODE_TTL);
-		this.codes.save(new EmailCode(EmailCodePurpose.SIGNUP, email, codeHash(email, code), now, expiresAt));
 		this.mails.enqueue(MailKind.SIGNUP_CODE, SignupMails.code(email, code), expiresAt);
 	}
 

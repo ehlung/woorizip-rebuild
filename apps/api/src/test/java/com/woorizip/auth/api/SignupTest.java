@@ -179,6 +179,22 @@ class SignupTest {
 	}
 
 	@Test
+	void A85_코드_확인_응답으로도_가입_여부를_알_수_없다() throws Exception {
+		String registered = newEmail();
+		signup(verifiedSignupToken(registered), PASSWORD, allConsents()).andExpect(status().isCreated());
+		this.clock.advance(Duration.ofMinutes(1));
+		String fresh = newEmail();
+		requestCode(registered).andExpect(status().isAccepted());
+		requestCode(fresh).andExpect(status().isAccepted());
+		String wrong = codeSentTo(fresh).equals("000000") ? "000001" : "000000";
+
+		String registeredResponse = verify(registered, wrong).andReturn().getResponse().getContentAsString();
+		String freshResponse = verify(fresh, wrong).andReturn().getResponse().getContentAsString();
+
+		assertThat(registeredResponse).isEqualTo(freshResponse).contains("EMAIL_CODE_INVALID");
+	}
+
+	@Test
 	void 같은_이메일로는_1분에_한_번만_요청할_수_있다() throws Exception {
 		String email = newEmail();
 		requestCode(email).andExpect(status().isAccepted());
