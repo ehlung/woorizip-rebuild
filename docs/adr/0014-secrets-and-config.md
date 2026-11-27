@@ -66,7 +66,7 @@ AWS Systems Manager Parameter Store(SecureString) 또는 Secrets Manager에 두�
 - 운영 비밀값은 Parameter Store의 SecureString(Standard)에 둔다. Secrets Manager의 자동 교체 기능은 지금 필요하지 않아 비용이 없는 Parameter Store를 쓴다.
 - 서비스는 IAM 역할로 읽는다. Spring은 Spring Cloud AWS의 `spring.config.import=aws-parameterstore:...`로 읽고, 필요한 값이 없으면 시작하지 않는다.
 - 비밀값은 저장소, CI 로그, 컨테이너 이미지, 앱 번들에 넣지 않는다. 앱에 들어가는 값은 공개되어도 되는 값(예: API 주소)만 둔다.
-- 앞선 결정으로 오래 사는 비밀값 자체를 줄였다. 서비스 간 인증과 AWS 서비스 호출은 IAM 역할로 한다([ADR 0005](0005-service-communication.md)). 남는 비밀값은 JWT 서명 키([ADR 0009](0009-auth-token.md))와 외부 서비스 키 정도다.
+- 앞선 결정으로 오래 사는 비밀값 자체를 줄였다. 서비스 간 인증과 AWS 서비스 호출은 IAM 역할로 한다([ADR 0005](0005-service-communication.md)). 남는 비밀값은 JWT 서명 키([ADR 0009](0009-auth-token.md))와 외부 서비스 키(메일 발송 등) 정도다.
   - 메일 발송은 [ADR 0018](0018-email-delivery.md)에서 IAM 역할로 호출하는 Amazon SES로 정해 키가 없다(2026-11-20).
 
 ### 커밋 방지

@@ -16,7 +16,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.support.TransactionTemplate;
 
-/** 메일 발송 작업과 재시도 (ADR 0018). A-88을 확인한다. */
+/** 메일 발송 작업과 재시도 (ADR 0018, 0020). A-88, A-91을 확인한다. */
 @SpringBootTest
 @ActiveProfiles("test")
 @Import({ TestcontainersConfiguration.class, TestClockConfiguration.class })
@@ -46,7 +46,7 @@ class MailDispatcherTest {
 	}
 
 	@Test
-	void 커밋되면_바로_보내고_본문을_지운다() {
+	void A91_커밋되면_바로_보내고_본문을_지운다() {
 		String to = enqueue(Duration.ofMinutes(10));
 
 		MailJob job = onlyJobTo(to);
@@ -93,7 +93,7 @@ class MailDispatcherTest {
 	}
 
 	@Test
-	void 만료_시각이_지나면_더_보내지_않고_본문을_지운다() {
+	void A91_만료_시각이_지나면_더_보내지_않고_본문을_지운다() {
 		this.gateway.failNext(100);
 		String to = enqueue(Duration.ofMinutes(1));
 

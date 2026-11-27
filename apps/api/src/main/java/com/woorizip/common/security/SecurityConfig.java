@@ -13,7 +13,7 @@ import org.springframework.security.web.SecurityFilterChain;
  * 요청 인증 규칙 (ADR 0009).
  *
  * <p>기본은 모든 요청에 access token을 요구한다. 로그인 없이 쓰는 주소(가입, 로그인, 토큰 재발급,
- * 비밀번호 재설정)는 그 기능을 만드는 PR에서 여기에 하나씩 연다.
+ * 로그아웃, 비밀번호 재설정)는 그 기능을 만드는 PR에서 여기에 하나씩 연다.
  */
 @Configuration(proxyBeanMethods = false)
 class SecurityConfig {
@@ -34,6 +34,9 @@ class SecurityConfig {
 				// 가입 (docs/plans/auth.md PR 2)
 				.requestMatchers(HttpMethod.POST, "/auth/signup", "/auth/signup/email-code",
 						"/auth/signup/email-code/verify")
+				.permitAll()
+				// 로그인, 토큰 재발급, 로그아웃 (docs/plans/auth.md PR 3)
+				.requestMatchers(HttpMethod.POST, "/auth/login", "/auth/token/refresh", "/auth/logout")
 				.permitAll()
 				// OpenAPI 명세. springdoc.api-docs.enabled가 false인 환경(운영)에서는 주소 자체가 없다.
 				.requestMatchers("/v3/api-docs", "/v3/api-docs/**")

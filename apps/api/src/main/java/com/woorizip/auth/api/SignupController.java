@@ -46,13 +46,12 @@ class SignupController {
 		return new VerifyEmailCodeResponse(ticket.signupToken(), ticket.expiresAt());
 	}
 
-	/** 계정을 만들고 access token을 발급한다. 가입이 끝나면 바로 로그인 상태가 된다. */
+	/** 계정을 만들고 토큰을 발급한다. 가입이 끝나면 바로 로그인 상태가 된다. */
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
-	SignupResponse signup(@Valid @RequestBody SignupRequest request) {
-		SignupService.SignedUp result = this.signup.signup(new SignupService.SignupCommand(request.signupToken(),
-				request.password(), request.name(), request.screenSize(), request.consents()));
-		return new SignupResponse(result.userId(), result.accessToken().value(), result.accessToken().expiresAt());
+	TokenResponse signup(@Valid @RequestBody SignupRequest request) {
+		return TokenResponse.from(this.signup.signup(new SignupService.SignupCommand(request.signupToken(),
+				request.password(), request.name(), request.screenSize(), request.consents())));
 	}
 
 	record EmailCodeRequest(@NotBlank @Email @Size(max = 320) String email) {
@@ -67,9 +66,6 @@ class SignupController {
 
 	record SignupRequest(@NotBlank String signupToken, @NotNull String password, @NotBlank @Size(max = 20) String name,
 			@NotNull ScreenSize screenSize, @NotNull Set<ConsentKind> consents) {
-	}
-
-	record SignupResponse(long userId, String accessToken, Instant accessTokenExpiresAt) {
 	}
 
 }

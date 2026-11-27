@@ -23,6 +23,10 @@ public enum ErrorCode {
 	EMAIL_CODE_EXPIRED(HttpStatus.BAD_REQUEST, "인증 코드를 쓸 수 없습니다. 코드를 다시 받아 주세요."),
 	SIGNUP_TOKEN_INVALID(HttpStatus.BAD_REQUEST, "가입 시간이 지났습니다. 이메일 인증부터 다시 해 주세요."),
 	EMAIL_ALREADY_REGISTERED(HttpStatus.CONFLICT, "이미 가입된 이메일입니다."),
+	LOGIN_FAILED(HttpStatus.UNAUTHORIZED, "이메일 또는 비밀번호가 맞지 않습니다."),
+	LOGIN_LOCKED(HttpStatus.TOO_MANY_REQUESTS, "로그인에 여러 번 실패했습니다. 잠시 뒤에 다시 시도해 주세요."),
+	PASSWORD_RESET_REQUIRED(HttpStatus.FORBIDDEN, "로그인에 너무 많이 실패했습니다. 비밀번호를 재설정해 주세요."),
+	REFRESH_TOKEN_INVALID(HttpStatus.UNAUTHORIZED, "로그인이 만료되었습니다. 다시 로그인해 주세요."),
 	INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버에서 오류가 발생했습니다.");
 
 	private final HttpStatus status;
