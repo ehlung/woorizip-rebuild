@@ -38,6 +38,10 @@ class SecurityConfig {
 				// 로그인, 토큰 재발급, 로그아웃 (docs/plans/auth.md PR 3)
 				.requestMatchers(HttpMethod.POST, "/auth/login", "/auth/token/refresh", "/auth/logout")
 				.permitAll()
+				// 비밀번호 재설정 (docs/plans/auth.md PR 4)
+				.requestMatchers(HttpMethod.POST, "/auth/password-reset", "/auth/password-reset/email-code",
+						"/auth/password-reset/email-code/verify")
+				.permitAll()
 				// OpenAPI 명세. springdoc.api-docs.enabled가 false인 환경(운영)에서는 주소 자체가 없다.
 				.requestMatchers("/v3/api-docs", "/v3/api-docs/**")
 				.permitAll()

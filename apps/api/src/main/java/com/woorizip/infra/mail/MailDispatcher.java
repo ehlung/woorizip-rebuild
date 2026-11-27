@@ -10,11 +10,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.event.TransactionPhase;
-import org.springframework.transaction.event.TransactionalEventListener;
 
 /**
- * 발송 작업을 보낸다. 커밋 직후 한 번 바로 보내고, 실패한 것은 스케줄러가 간격을 두고 다시 보낸다.
+ * 발송 작업을 보낸다. 커밋 직후 한 번 바로 보내고({@link MailAfterCommitSender}), 실패한 것은 스케줄러가 간격을 두고
+ * 다시 보낸다.
  *
  * <p>재시도 간격은 30초, 1분, 2분, 4분이다. 만료 시각(코드 메일은 코드 만료)이 지나면 더 보내지 않는다.
  * 여러 서버가 동시에 돌아도 {@code FOR UPDATE SKIP LOCKED}로 같은 작업을 두 번 잡지 않는다.
@@ -41,11 +40,13 @@ public class MailDispatcher {
 		this.clock = clock;
 	}
 
-	/** 요청 트랜잭션이 커밋된 직후 그 메일을 바로 보낸다. */
-	@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+	/**
+	 * 그 작업을 바로 한 번 보낸다. {@link MailAfterCommitSender}가 요청 트랜잭션이 커밋된 뒤 부른다. 커밋 직후에는
+	 * 끝난 트랜잭션이 아직 묶여 있을 수 있어 새 트랜잭션을 연다.
+	 */
 	@Transactional(propagation = Propagation.REQUIRES_NEW)
-	public void sendAfterCommit(MailOutbox.MailJobCreated event) {
-		this.jobs.lockPending(event.jobId()).ifPresent(this::attempt);
+	public void sendNow(long jobId) {
+		this.jobs.lockPending(jobId).ifPresent(this::attempt);
 	}
 
 	/** 보낼 차례인 작업을 보낸다. 처리한 작업 수를 돌려준다. */

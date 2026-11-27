@@ -74,6 +74,14 @@ public class UserIdentity {
 		return subject;
 	}
 
+	/** 비밀번호를 바꾼다. 이메일 로그인 수단에만 쓴다. */
+	public void changePassword(String passwordHash) {
+		if (this.provider != IdentityProvider.EMAIL) {
+			throw new IllegalStateException("이메일 로그인 수단이 아니다");
+		}
+		this.passwordHash = passwordHash;
+	}
+
 	public String getPasswordHash() {
 		return passwordHash;
 	}

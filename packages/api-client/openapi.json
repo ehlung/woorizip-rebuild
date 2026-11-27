@@ -83,6 +83,109 @@
         "tags" : [ "auth-controller" ]
       }
     },
+    "/auth/password-reset" : {
+      "post" : {
+        "operationId" : "reset",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ResetPasswordRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          },
+          "default" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiProblem"
+                }
+              }
+            },
+            "description" : "오류. 앱은 code로 처리 방식을 정한다"
+          }
+        },
+        "security" : [ ],
+        "tags" : [ "password-reset-controller" ]
+      }
+    },
+    "/auth/password-reset/email-code" : {
+      "post" : {
+        "operationId" : "requestCode_1",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/EmailCodeRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "202" : {
+            "description" : "Accepted"
+          },
+          "default" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiProblem"
+                }
+              }
+            },
+            "description" : "오류. 앱은 code로 처리 방식을 정한다"
+          }
+        },
+        "security" : [ ],
+        "tags" : [ "password-reset-controller" ]
+      }
+    },
+    "/auth/password-reset/email-code/verify" : {
+      "post" : {
+        "operationId" : "verifyCode_1",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/VerifyResetCodeRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/VerifyResetCodeResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "default" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiProblem"
+                }
+              }
+            },
+            "description" : "오류. 앱은 code로 처리 방식을 정한다"
+          }
+        },
+        "security" : [ ],
+        "tags" : [ "password-reset-controller" ]
+      }
+    },
     "/auth/signup" : {
       "post" : {
         "operationId" : "signup",
@@ -252,7 +355,7 @@
         "properties" : {
           "code" : {
             "type" : "string",
-            "enum" : [ "BAD_REQUEST", "VALIDATION_FAILED", "UNAUTHORIZED", "FORBIDDEN", "NOT_FOUND", "METHOD_NOT_ALLOWED", "UNSUPPORTED_MEDIA_TYPE", "TOO_MANY_REQUESTS", "EMAIL_CODE_INVALID", "EMAIL_CODE_EXPIRED", "SIGNUP_TOKEN_INVALID", "EMAIL_ALREADY_REGISTERED", "LOGIN_FAILED", "LOGIN_LOCKED", "PASSWORD_RESET_REQUIRED", "REFRESH_TOKEN_INVALID", "INTERNAL_ERROR" ]
+            "enum" : [ "BAD_REQUEST", "VALIDATION_FAILED", "UNAUTHORIZED", "FORBIDDEN", "NOT_FOUND", "METHOD_NOT_ALLOWED", "UNSUPPORTED_MEDIA_TYPE", "TOO_MANY_REQUESTS", "EMAIL_CODE_INVALID", "EMAIL_CODE_EXPIRED", "SIGNUP_TOKEN_INVALID", "EMAIL_ALREADY_REGISTERED", "PASSWORD_RESET_TOKEN_INVALID", "LOGIN_FAILED", "LOGIN_LOCKED", "PASSWORD_RESET_REQUIRED", "REFRESH_TOKEN_INVALID", "INTERNAL_ERROR" ]
           },
           "detail" : {
             "type" : "string"
@@ -315,6 +418,19 @@
           }
         },
         "required" : [ "refreshToken" ]
+      },
+      "ResetPasswordRequest" : {
+        "type" : "object",
+        "properties" : {
+          "newPassword" : {
+            "type" : "string"
+          },
+          "resetToken" : {
+            "type" : "string",
+            "minLength" : 1
+          }
+        },
+        "required" : [ "newPassword", "resetToken" ]
       },
       "SignupRequest" : {
         "type" : "object",
@@ -394,6 +510,35 @@
             "format" : "date-time"
           },
           "signupToken" : {
+            "type" : "string"
+          }
+        }
+      },
+      "VerifyResetCodeRequest" : {
+        "type" : "object",
+        "properties" : {
+          "code" : {
+            "type" : "string",
+            "minLength" : 1,
+            "pattern" : "\\d{6}"
+          },
+          "email" : {
+            "type" : "string",
+            "format" : "email",
+            "maxLength" : 320,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "code", "email" ]
+      },
+      "VerifyResetCodeResponse" : {
+        "type" : "object",
+        "properties" : {
+          "expiresAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "resetToken" : {
             "type" : "string"
           }
         }
